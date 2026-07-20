@@ -1,10 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-public class Product
+public class CreateProductRequest
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(100)]
     public required string Name { get; set; }

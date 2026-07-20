@@ -1,10 +1,8 @@
-using OrderSystem.Models;
+﻿using OrderSystem.Models;
 using System.ComponentModel.DataAnnotations;
 
-public class Customer
+public class CreateCustomerRequest
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(50)]
     public required string FirstName { get; set; }
@@ -16,10 +14,3 @@ public class Customer
     [Required]
     public CustomerType CustomerType { get; set; }
 }
-
-/*
-    Employee: 0.5
-    VIP: 0.8
-    WholeSale: 0.85
-    Regular: 1
-*/
