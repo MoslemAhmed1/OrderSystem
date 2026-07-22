@@ -1,25 +1,28 @@
-using OrderSystem.Models;
 using System.ComponentModel.DataAnnotations;
 
-public class Customer
+namespace OrderSystem.Models
 {
-    public int Id { get; set; }
+    public enum CustomerType
+    {
+        Regular,
+        Employee,
+        VIP,
+        WholeSale
+    }
 
-    [Required]
-    [StringLength(50)]
-    public required string FirstName { get; set; }
+    public class Customer
+    {
+        public int Id { get; set; }
 
-    [Required]
-    [StringLength(50)]
-    public required string LastName { get; set; }
+        [Required]
+        [StringLength(50)]
+        public required string FirstName { get; set; }
 
-    [Required]
-    public CustomerType CustomerType { get; set; }
+        [Required]
+        [StringLength(50)]
+        public required string LastName { get; set; }
+
+        [Required]
+        public CustomerType CustomerType { get; set; }
+    }
 }
-
-/*
-    Employee: 0.5
-    VIP: 0.8
-    WholeSale: 0.85
-    Regular: 1
-*/

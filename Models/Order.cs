@@ -1,18 +1,31 @@
 using Microsoft.EntityFrameworkCore;
-using OrderSystem.Models;
+using System.ComponentModel.DataAnnotations;
 
-public class Order
+namespace OrderSystem.Models
 {
-    public int Id { get; set; }
+    public enum OrderStatus
+    {
+        New,
+        Paid,
+        Shipped
+    }
 
-    public int CustomerId { get; set; }
-    public Customer Customer { get; set; } = null!;
+    public class Order
+    {
+        public int Id { get; set; }
 
-    public List<OrderItem> Items { get; set; } = new List<OrderItem>();
-    public OrderStatus Status { get; set; }
+        public int CustomerId { get; set; }
+        
+        public OrderStatus Status { get; set; }
 
-    [Precision(18, 2)]
-    public decimal Total { get; set; }
+        [Precision(18, 2)]
+        public decimal Total { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        public DateTime CreatedAt { get; set; }
+
+        public Customer Customer { get; set; } = null!;
+        public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    }
 }
