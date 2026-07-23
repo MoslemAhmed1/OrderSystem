@@ -29,6 +29,7 @@ namespace OrderSystem.Repositories
             _orderContext.Customers.Update(customer);
             await Task.CompletedTask;
         }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var customer = await _orderContext.Customers.FindAsync(id);

@@ -1,11 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-public class CreateOrderRequest
+namespace OrderSystem.DTOs.Orders
 {
-    [Required]
-    public int CustomerId { get; set; }
+    public class CreateOrderRequest
+    {
+        [Required]
+        public int CustomerId { get; set; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "Order must contain at least one item.")]
-    public List<CreateOrderItemRequest> Items { get; set; } = new();
+        [Required]
+        [MinLength(1, ErrorMessage = "Order must contain at least one item.")]
+        public List<CreateOrderItemRequest> Items { get; set; } = new();
+    }
 }

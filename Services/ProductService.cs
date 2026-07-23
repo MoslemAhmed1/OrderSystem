@@ -1,0 +1,85 @@
+﻿using Microsoft.EntityFrameworkCore;
+using OrderSystem.DTOs.Products;
+using OrderSystem.Models;
+using OrderSystem.Repositories;
+
+namespace OrderSystem.Services
+{
+    public class ProductService : IProductService
+    {
+        private readonly IUnitOfWork _uow;
+
+        public ProductService(IUnitOfWork uow)
+        {
+            _uow = uow;
+        }
+
+        public async Task<ProductResponse?> GetByIdAsync(int id)
+        {
+            var product = await _uow.Products.GetByIdAsync(id);
+            return product is null ? null : MapToResponse(product);
+        }
+
+        public async Task<List<ProductResponse>> GetAllAsync()
+        {
+            var products = await _uow.Products.GetAllAsync();
+            return products.Select(MapToResponse).ToList();
+        }
+
+        public async Task<ProductResponse> CreateAsync(CreateProductRequest request)
+        {
+            var product = new Product
+            {
+                Name = request.Name,
+                Price = request.Price
+            };
+
+            await _uow.Products.AddAsync(product);
+            await _uow.CommitAsync();
+
+            return MapToResponse(product);
+        }
+
+        public async Task<ProductResponse?> UpdateAsync(int id, UpdateProductRequest request)
+        {
+            var product = await _uow.Products.GetByIdAsync(id);
+            if (product is null)
+                return null;
+
+            product.Name = request.Name;
+            product.Price = request.Price;
+
+            await _uow.Products.UpdateAsync(product);
+            await _uow.CommitAsync();
+
+            return MapToResponse(product);
+        }
+
+        public async Task<DeleteResult> DeleteAsync(int id)
+        {
+            var deleted = await _uow.Products.DeleteAsync(id);
+            if (!deleted)
+                return DeleteResult.NotFound;
+
+            try
+            {
+                await _uow.CommitAsync();
+                return DeleteResult.Success;
+            }
+            catch (DbUpdateException)
+            {
+                return DeleteResult.HasExistingOrders;
+            }
+        }
+
+        private static ProductResponse MapToResponse(Product product)
+        {
+            return new ProductResponse
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = product.Price
+            };
+        }
+    }
+}

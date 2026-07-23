@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace OrderSystem.DTOs.Orders
+﻿namespace OrderSystem.DTOs.Orders
 {
     public class OrderResponse
     {
