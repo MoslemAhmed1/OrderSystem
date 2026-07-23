@@ -7,5 +7,6 @@ namespace OrderSystem.Repositories
         Task<Order?> GetByIdAsync(int id);
         Task<List<Order>> GetAllAsync();
         Task AddAsync(Order order);
+        Task<bool> DeleteAsync(int id);
     }
 }

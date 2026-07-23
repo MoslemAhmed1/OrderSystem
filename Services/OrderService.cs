@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OrderSystem.DTOs.Orders;
 using OrderSystem.Models;
 using OrderSystem.Repositories;
@@ -77,6 +78,16 @@ namespace OrderSystem.Services
             await _uow.CommitAsync();
 
             return MapToResponse(order);
+        }
+
+        public async Task<DeleteResult> DeleteAsync(int id)
+        {
+            var deleted = await _uow.Orders.DeleteAsync(id);
+            if (!deleted)
+                return DeleteResult.NotFound;
+
+            await _uow.CommitAsync();
+            return DeleteResult.Success;
         }
 
         private static OrderResponse MapToResponse(Order order)
