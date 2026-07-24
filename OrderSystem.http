@@ -1,106 +1,65 @@
 @OrderSystem_HostAddress = http://localhost:5208
 
-### Create Product 1
+### Create Product
 POST {{OrderSystem_HostAddress}}/Products
 Content-Type: application/json
 
 {
-  "name": "Airpods",
-  "price": 799.50
-}
-
-### Create Product 2
-POST {{OrderSystem_HostAddress}}/Products
-Content-Type: application/json
-
-{
-  "name": "Network Switch",
-  "price": 120.00
+  "name": "Gaming Laptop",
+  "price": 1899.99
 }
 
 ### Get all Products
 GET {{OrderSystem_HostAddress}}/Products
 
 ### Get Product by Id
-GET {{OrderSystem_HostAddress}}/Products/1
+GET {{OrderSystem_HostAddress}}/Products/5
 
 ### Update Product
-PUT {{OrderSystem_HostAddress}}/Products/1
+PUT {{OrderSystem_HostAddress}}/Products/5
 Content-Type: application/json
 
 {
-  "name": "Server Rack Unit v2",
-  "price": 475.00
+  "name": "Sneakers v2",
+  "price": 54.00
 }
 
-### Create Customer (VIP)
+### Create Customer
 POST {{OrderSystem_HostAddress}}/Customers
 Content-Type: application/json
 
 {
-  "firstName": "Ali",
-  "lastName": "Said",
-  "customerType": "VIP"
-}
-
-### Create Customer (Regular)
-POST {{OrderSystem_HostAddress}}/Customers
-Content-Type: application/json
-
-{
-  "firstName": "Moslem",
-  "lastName": "Ahmed",
-  "customerType": "Regular"
+  "firstName": "Abdullah",
+  "lastName": "Sherif",
+  "customerType": "Employee"
 }
 
 ### Get all Customers
 GET {{OrderSystem_HostAddress}}/Customers
 
 ### Get Customer by Id
-GET {{OrderSystem_HostAddress}}/Customers/1
+GET {{OrderSystem_HostAddress}}/Customers/4
 
 ### Update Customer
-PUT {{OrderSystem_HostAddress}}/Customers/1
+PUT {{OrderSystem_HostAddress}}/Customers/4
 Content-Type: application/json
 
 {
-  "firstName": "Ahmed",
-  "lastName": "Amr",
+  "firstName": "Abdullah",
+  "lastName": "Sayed",
   "customerType": "WholeSale"
 }
 
-### Create Order (valid customer + products)
+### Create Order
 POST {{OrderSystem_HostAddress}}/Orders
 Content-Type: application/json
 
 {
-  "customerId": 3,
+  "customerId": 4,
   "items": [
-    { "productId": 1, "qty": 2 },
+    { "productId": 5, "qty": 2 },
     { "productId": 2, "qty": 3 },
     { "productId": 3, "qty": 1 }
-  ]
-}
-
-### Create Order - nonexistent customer (expect 404)
-POST {{OrderSystem_HostAddress}}/Orders
-Content-Type: application/json
-
-{
-  "customerId": 9999,
-  "items": [
-    { "productId": 1, "qty": 1 }
-  ]
-}
-
-### Create Order - nonexistent product (expect 404)
-POST {{OrderSystem_HostAddress}}/Orders
-Content-Type: application/json
-
-{
-  "customerId": 1,
-  "items": [
-    { "productId": 9999, "qty": 1 }
   ]
 }
 
@@ -108,27 +67,21 @@ Content-Type: application/json
 GET {{OrderSystem_HostAddress}}/Orders
 
 ### Get Order by Id
-GET {{OrderSystem_HostAddress}}/Orders/3
+GET {{OrderSystem_HostAddress}}/Orders/4
 
 ### Update Order Status
-PATCH {{OrderSystem_HostAddress}}/Orders/2/status
+PATCH {{OrderSystem_HostAddress}}/Orders/3/status
 Content-Type: application/json
 
 {
-  "orderStatus": "Paid"
+  "orderStatus": "New"
 }
 
-### Delete Order (should cascade-delete its items)
-DELETE {{OrderSystem_HostAddress}}/Orders/1
+### Delete Order
+DELETE {{OrderSystem_HostAddress}}/Orders/5
 
-### Delete Product that HAS been ordered (expect 409 Conflict)
-DELETE {{OrderSystem_HostAddress}}/Products/2
+### Delete Product
+DELETE {{OrderSystem_HostAddress}}/Products/6
 
-### Delete Customer that HAS orders (expect 409 Conflict)
-DELETE {{OrderSystem_HostAddress}}/Customers/2
-
-### Delete Product with no orders (expect 204)
-DELETE {{OrderSystem_HostAddress}}/Products/4
-
-### Delete nonexistent resource (expect 404)
-DELETE {{OrderSystem_HostAddress}}/Products/9999
+### Delete Customer
+DELETE {{OrderSystem_HostAddress}}/Customers/4
