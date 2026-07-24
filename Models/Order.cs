@@ -15,7 +15,8 @@ namespace OrderSystem.Models
         public int Id { get; set; }
 
         public int CustomerId { get; set; }
-        
+        public Customer Customer { get; set; } = null!;
+
         public OrderStatus Status { get; set; }
 
         [Precision(18, 2)]
@@ -24,8 +25,7 @@ namespace OrderSystem.Models
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime CreatedAt { get; set; }
-
-        public Customer Customer { get; set; } = null!;
+        
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }

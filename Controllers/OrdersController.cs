@@ -39,27 +39,50 @@ namespace OrderSystem.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusRequest request)
         {
-            var order = await _orderService.UpdateStatusAsync(id, request.OrderStatus);
-            return order is null ? NotFound() : Ok(order);
+            try
+            {
+                var order = await _orderService.UpdateStatusAsync(id, request.OrderStatus);
+                return order is null ? NotFound() : Ok(order);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("{id}/items")]
+        public async Task<IActionResult> UpdateItems(int id, List<CreateOrderItemRequest> items)
+        {
+            try
+            {
+                var order = await _orderService.UpdateItemsAsync(id, items);
+                return order is null ? NotFound() : Ok(order);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _orderService.DeleteAsync(id);
-            return result switch
+            try
             {
-                DeleteResult.NotFound => NotFound(),
-                DeleteResult.Success => NoContent(),
-                _ => StatusCode(500)
-            };
+                await _orderService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

@@ -7,7 +7,7 @@ namespace OrderSystem.Repositories
         Task<Customer?> GetByIdAsync(int id);
         Task<List<Customer>> GetAllAsync();
         Task AddAsync(Customer customer);
-        Task UpdateAsync(Customer customer);
+        void Update(Customer customer);
         Task<bool> DeleteAsync(int id);
     }
 }

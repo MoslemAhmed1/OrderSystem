@@ -8,7 +8,7 @@ namespace OrderSystem.Repositories
         Task<Product?> GetByIdAsync(int id);
         Task<List<Product>> GetAllAsync();
         Task AddAsync(Product product);
-        Task UpdateAsync(Product product);
+        void Update(Product product);
         Task<bool> DeleteAsync(int id);
     }
 }

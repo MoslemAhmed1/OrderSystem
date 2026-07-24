@@ -15,5 +15,7 @@ namespace OrderSystem.Models
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be a positive number")]
         [Precision(18, 2)]
         public decimal Price { get; set; }
+
+        // TODO: Add StockQuantity and Update on each order, Validate OrderItem Qty against StockQuantity
     }
 }

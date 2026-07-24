@@ -24,10 +24,9 @@ namespace OrderSystem.Repositories
         {
             await _orderContext.Products.AddAsync(product);
         }
-        public async Task UpdateAsync(Product product)
+        public void Update(Product product)
         {
             _orderContext.Products.Update(product);
-            await Task.CompletedTask;
         }
         public async Task<bool> DeleteAsync(int id)
         {

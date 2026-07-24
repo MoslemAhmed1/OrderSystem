@@ -34,6 +34,11 @@ namespace OrderSystem.Repositories
             await _orderContext.Orders.AddAsync(order);
         }
 
+        public void Update(Order order)
+        {
+            _orderContext.Orders.Update(order);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var order = await _orderContext.Orders.FindAsync(id);

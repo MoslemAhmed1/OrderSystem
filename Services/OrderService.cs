@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using OrderSystem.DTOs.Orders;
+﻿using OrderSystem.DTOs.Orders;
 using OrderSystem.Models;
 using OrderSystem.Repositories;
 
@@ -31,41 +29,22 @@ namespace OrderSystem.Services
             if (customer is null)
                 throw new InvalidOperationException($"Customer {request.CustomerId} not found.");
 
+            var items = await BuildItems(request.Items);
             var order = new Order
             {
                 CustomerId = customer.Id,
-                //Customer = customer, TODO: this or refetch from databse for customer to be populated in OrderResponse DTO?
+                Customer = customer, // TODO: this or refetch from databse for customer to be populated in OrderResponse DTO?
                 Status = OrderStatus.New,
-                //Items = new List<OrderItem>()
+                Items = items
             };
-
-            decimal total = 0m;
-            foreach (var itemRequest in request.Items)
-            {
-                var product = await _uow.Products.GetByIdAsync(itemRequest.ProductId);
-                if (product is null)
-                    throw new InvalidOperationException($"Product {itemRequest.ProductId} not found.");
-
-                var orderItem = new OrderItem
-                {
-                    ProductId = product.Id,
-                    //Product = product, TODO: this or refetch from databse for product to be populated in OrderResponse DTO?
-                    Qty = itemRequest.Qty,
-                    UnitPrice = product.Price
-                };
-
-                order.Items.Add(orderItem);
-                total += orderItem.UnitPrice * orderItem.Qty;
-            }
-
-            var discount = _discountPolicy.GetDiscount(customer.CustomerType);
-            order.Total = total * discount;
+            
+            order.Total = CalculateTotal(items, customer.CustomerType);
 
             await _uow.Orders.AddAsync(order);
             await _uow.CommitAsync();
 
-            var savedOrder = await _uow.Orders.GetByIdAsync(order.Id); // TODO: this or populate customer & product above ?
-            return MapToResponse(savedOrder!);
+            //var savedOrder = await _uow.Orders.GetByIdAsync(order.Id); // TODO: this or populate customer & product above ?
+            return MapToResponse(order);
         }
 
         public async Task<OrderResponse?> UpdateStatusAsync(int id, OrderStatus newStatus)
@@ -74,20 +53,83 @@ namespace OrderSystem.Services
             if (order is null) 
                 return null;
 
+            if(!IsValidTransition(order.Status, newStatus))
+                throw new InvalidOperationException($"Cannot transition order from {order.Status} to {newStatus}.");
+
             order.Status = newStatus;
             await _uow.CommitAsync();
 
             return MapToResponse(order);
         }
 
-        public async Task<DeleteResult> DeleteAsync(int id)
+        public async Task<OrderResponse?> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems)
+        {
+            var order = await _uow.Orders.GetByIdAsync(id);
+            if (order is null)
+                return null;
+
+            if (order.Status != OrderStatus.New)
+                throw new InvalidOperationException("Only orders with status 'New' can have their items updated.");
+
+            var items = await BuildItems(newItems);
+            order.Items.Clear();
+            foreach (var item in items)
+                order.Items.Add(item);
+
+            order.Total = CalculateTotal(items, order.Customer.CustomerType);
+
+            await _uow.CommitAsync();
+
+            return MapToResponse(order);
+        }
+
+        public async Task DeleteAsync(int id)
         {
             var deleted = await _uow.Orders.DeleteAsync(id);
             if (!deleted)
-                return DeleteResult.NotFound;
+                throw new InvalidOperationException($"Order {id} not found.");
 
             await _uow.CommitAsync();
-            return DeleteResult.Success;
+        }
+
+       private async Task<List<OrderItem>> BuildItems(List<CreateOrderItemRequest> items)
+       {
+            var orderItems = new List<OrderItem>();
+            foreach (var item in items)
+            {
+                var product = await _uow.Products.GetByIdAsync(item.ProductId);
+                if (product is null)
+                    throw new InvalidOperationException($"Product {item.ProductId} not found.");
+                
+                var orderItem = new OrderItem
+                {
+                    ProductId = product.Id,
+                    Product = product, // TODO: this or refetch from databse for product to be populated in OrderResponse DTO?
+                    Qty = item.Qty,
+                    UnitPrice = product.Price
+                };
+                orderItems.Add(orderItem);
+            }
+            
+            return orderItems;
+       }
+
+        private decimal CalculateTotal(List<OrderItem> items, CustomerType customerType)
+        {
+            var total = items.Sum(i => i.Qty * i.UnitPrice);
+            var discount = _discountPolicy.GetDiscount(customerType);
+            return total * discount;
+        }
+
+        private static bool IsValidTransition(OrderStatus current, OrderStatus next)
+        {
+            return (current, next) switch
+            {
+                (OrderStatus.New, OrderStatus.Paid) => true,
+                (OrderStatus.Paid, OrderStatus.Shipped) => true,
+                (OrderStatus.Paid, OrderStatus.New) => true,
+                _ => false
+            };
         }
 
         private static OrderResponse MapToResponse(Order order)

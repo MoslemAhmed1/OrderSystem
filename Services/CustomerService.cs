@@ -52,7 +52,7 @@ namespace OrderSystem.Services
             customer.LastName = request.LastName;
             customer.CustomerType = request.CustomerType;
 
-            await _uow.Customers.UpdateAsync(customer);
+            _uow.Customers.Update(customer);
             await _uow.CommitAsync();
 
             return MapToResponse(customer);

@@ -9,6 +9,7 @@ namespace OrderSystem.Services
         Task<List<OrderResponse>> GetAllAsync();
         Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request);
         Task<OrderResponse?> UpdateStatusAsync(int id, OrderStatus newStatus);
-        Task<DeleteResult> DeleteAsync(int id);
+        Task<OrderResponse?> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems);
+        Task DeleteAsync(int id);
     }
 }

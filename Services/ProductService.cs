@@ -49,7 +49,7 @@ namespace OrderSystem.Services
             product.Name = request.Name;
             product.Price = request.Price;
 
-            await _uow.Products.UpdateAsync(product);
+            _uow.Products.Update(product);
             await _uow.CommitAsync();
 
             return MapToResponse(product);
