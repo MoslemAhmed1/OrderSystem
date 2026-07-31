@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using OrderSystem.DTOs.Customers;
 using OrderSystem.Models;
 using OrderSystem.Repositories;
@@ -8,22 +7,24 @@ namespace OrderSystem.Services
 {
     public class CustomerService : ICustomerService
     {
+        private readonly ICustomerRepository _customerRepository;
         private readonly IUnitOfWork _uow;
 
-        public CustomerService(IUnitOfWork uow)
+        public CustomerService(ICustomerRepository customerRepository, IUnitOfWork uow)
         {
+            _customerRepository = customerRepository;
             _uow = uow;
         }
 
         public async Task<CustomerResponse?> GetByIdAsync(int id)
         {
-            var customer = await _uow.Customers.GetByIdAsync(id);
+            var customer = await _customerRepository.GetByIdAsync(id);
             return customer is null ? null : MapToResponse(customer);
         }
 
         public async Task<List<CustomerResponse>> GetAllAsync()
         {
-            var customers = await _uow.Customers.GetAllAsync();
+            var customers = await _customerRepository.GetAllAsync();
             return customers.Select(MapToResponse).ToList();
         }
 
@@ -36,7 +37,7 @@ namespace OrderSystem.Services
                 CustomerType = request.CustomerType
             };
 
-            await _uow.Customers.AddAsync(customer);
+            await _customerRepository.AddAsync(customer);
             await _uow.CommitAsync();
 
             return MapToResponse(customer);
@@ -44,7 +45,7 @@ namespace OrderSystem.Services
 
         public async Task<CustomerResponse?> UpdateAsync(int id, UpdateCustomerRequest request)
         {
-            var customer = await _uow.Customers.GetByIdAsync(id);
+            var customer = await _customerRepository.GetByIdAsync(id);
             if (customer is null)
                 return null;
 
@@ -52,7 +53,7 @@ namespace OrderSystem.Services
             customer.LastName = request.LastName;
             customer.CustomerType = request.CustomerType;
 
-            _uow.Customers.Update(customer);
+            _customerRepository.Update(customer);
             await _uow.CommitAsync();
 
             return MapToResponse(customer);
@@ -61,7 +62,7 @@ namespace OrderSystem.Services
         public async Task<DeleteResult> DeleteAsync(int id)
         {
 
-            var deleted = await _uow.Customers.DeleteAsync(id);
+            var deleted = await _customerRepository.DeleteAsync(id);
             if (!deleted)
                 return DeleteResult.NotFound;
 

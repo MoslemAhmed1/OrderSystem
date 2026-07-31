@@ -7,22 +7,24 @@ namespace OrderSystem.Services
 {
     public class ProductService : IProductService
     {
+        private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _uow;
 
-        public ProductService(IUnitOfWork uow)
+        public ProductService(IProductRepository productRepository, IUnitOfWork uow)
         {
+            _productRepository = productRepository;
             _uow = uow;
         }
 
         public async Task<ProductResponse?> GetByIdAsync(int id)
         {
-            var product = await _uow.Products.GetByIdAsync(id);
+            var product = await _productRepository.GetByIdAsync(id);
             return product is null ? null : MapToResponse(product);
         }
 
         public async Task<List<ProductResponse>> GetAllAsync()
         {
-            var products = await _uow.Products.GetAllAsync();
+            var products = await _productRepository.GetAllAsync();
             return products.Select(MapToResponse).ToList();
         }
 
@@ -34,7 +36,7 @@ namespace OrderSystem.Services
                 Price = request.Price
             };
 
-            await _uow.Products.AddAsync(product);
+            await _productRepository.AddAsync(product);
             await _uow.CommitAsync();
 
             return MapToResponse(product);
@@ -42,14 +44,14 @@ namespace OrderSystem.Services
 
         public async Task<ProductResponse?> UpdateAsync(int id, UpdateProductRequest request)
         {
-            var product = await _uow.Products.GetByIdAsync(id);
+            var product = await _productRepository.GetByIdAsync(id);
             if (product is null)
                 return null;
 
             product.Name = request.Name;
             product.Price = request.Price;
 
-            _uow.Products.Update(product);
+            _productRepository.Update(product);
             await _uow.CommitAsync();
 
             return MapToResponse(product);
@@ -57,7 +59,7 @@ namespace OrderSystem.Services
 
         public async Task<DeleteResult> DeleteAsync(int id)
         {
-            var deleted = await _uow.Products.DeleteAsync(id);
+            var deleted = await _productRepository.DeleteAsync(id);
             if (!deleted)
                 return DeleteResult.NotFound;
 

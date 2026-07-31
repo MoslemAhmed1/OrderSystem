@@ -16,6 +16,10 @@ namespace OrderSystem.Repositories
         {
             return await _orderContext.Products.FindAsync(id);
         }
+        public async Task<List<Product>> GetByIdsAsync(List<int> ids)
+        {
+            return await _orderContext.Products.Where(p => ids.Contains(p.Id)).ToListAsync();
+        }
         public async Task<List<Product>> GetAllAsync()
         {
             return await _orderContext.Products.ToListAsync();

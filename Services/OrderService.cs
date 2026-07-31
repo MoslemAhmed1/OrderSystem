@@ -7,26 +7,32 @@ namespace OrderSystem.Services
 {
     public class OrderService : IOrderService
     {
+        private readonly IOrderRepository _orderRepository;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _uow;
         private readonly IDiscountPolicy _discountPolicy;
-        public OrderService(IUnitOfWork uow, IDiscountPolicy discountPolicy)
+        public OrderService(IOrderRepository orderRepository, ICustomerRepository customerRepository, IProductRepository productRepository, IUnitOfWork uow, IDiscountPolicy discountPolicy)
         {
+            _orderRepository = orderRepository;
+            _customerRepository = customerRepository;
+            _productRepository = productRepository;
             _uow = uow;
             _discountPolicy = discountPolicy;
         }
         public async Task<OrderResponse?> GetByIdAsync(int id)
         {
-            var order = await _uow.Orders.GetByIdAsync(id);
+            var order = await _orderRepository.GetByIdAsync(id);
             return (order is null ? null : MapToResponse(order));
         }
         public async Task<List<OrderResponse>> GetAllAsync()
         {
-            var orders = await _uow.Orders.GetAllAsync();
+            var orders = await _orderRepository.GetAllAsync();
             return orders.Select(MapToResponse).ToList();
         }
         public async Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request)
         {
-            var customer = await _uow.Customers.GetByIdAsync(request.CustomerId);
+            var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
             if (customer is null)
                 throw new InvalidOperationException($"Customer {request.CustomerId} not found.");
 
@@ -41,7 +47,7 @@ namespace OrderSystem.Services
             
             order.Total = CalculateTotal(items, customer.CustomerType);
 
-            await _uow.Orders.AddAsync(order);
+            await _orderRepository.AddAsync(order);
             await _uow.CommitAsync();
 
             //var savedOrder = await _uow.Orders.GetByIdAsync(order.Id); // TODO: this or populate customer & product above ?
@@ -50,7 +56,7 @@ namespace OrderSystem.Services
 
         public async Task<OrderResponse?> UpdateStatusAsync(int id, OrderStatus newStatus)
         {
-            var order = await _uow.Orders.GetByIdAsync(id);
+            var order = await _orderRepository.GetByIdAsync(id);
             if (order is null) 
                 return null;
 
@@ -65,7 +71,7 @@ namespace OrderSystem.Services
 
         public async Task<OrderResponse?> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems)
         {
-            var order = await _uow.Orders.GetByIdAsync(id);
+            var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
                 return null;
 
@@ -86,7 +92,7 @@ namespace OrderSystem.Services
 
         public async Task DeleteAsync(int id)
         {
-            var deleted = await _uow.Orders.DeleteAsync(id);
+            var deleted = await _orderRepository.DeleteAsync(id);
             if (!deleted)
                 throw new InvalidOperationException($"Order {id} not found.");
 
@@ -96,9 +102,11 @@ namespace OrderSystem.Services
        private async Task<List<OrderItem>> BuildItems(List<CreateOrderItemRequest> items)
        {
             var orderItems = new List<OrderItem>();
+            var productIds = items.Select(i => i.ProductId).Distinct().ToList();
+            var products = await _productRepository.GetByIdsAsync(productIds);
             foreach (var item in items)
             {
-                var product = await _uow.Products.GetByIdAsync(item.ProductId);
+                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
                 if (product is null)
                     throw new InvalidOperationException($"Product {item.ProductId} not found.");
                 

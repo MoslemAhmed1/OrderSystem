@@ -50,7 +50,7 @@ app.Run();
 
 /*
 Upcoming Tasks:
-1- Try moving Discount to appsettings.json, so any discount can be applied without changing the code
+1- Try moving Discount to appsettings.json, so any discount can be applied without changing the code [Done]
 2- Unit of Work: remove repositories, each service will have an instance of uow and the repositories it needs only
 3- OrderService: for loop in BuildItems() which gets products by id, add a function in OrderRepository which gets all products by a list of ids, and then use that function in OrderService
 4- Apply: ViewModel <-> DTO <-> Entity mapping
