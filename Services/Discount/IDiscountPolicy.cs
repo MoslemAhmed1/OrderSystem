@@ -1,6 +1,6 @@
 ﻿using OrderSystem.Models;
 
-namespace OrderSystem.Services
+namespace OrderSystem.Services.Discount
 {
     public interface IDiscountPolicy
     {
