@@ -7,7 +7,8 @@ namespace OrderSystem.Models
     {
         New,
         Paid,
-        Shipped
+        Shipped,
+        Cancelled
     }
 
     public class Order

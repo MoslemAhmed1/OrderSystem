@@ -90,6 +90,32 @@ namespace OrderSystem.Services
             return MapToResponse(order);
         }
 
+        public async Task CancelOrderAsync(int id)
+        {
+            var order = await _orderRepository.GetByIdAsync(id);
+            if (order is null)
+                throw new InvalidOperationException($"Order {id} not found.");
+            
+            if (!IsValidTransition(order.Status, OrderStatus.Cancelled))
+                throw new InvalidOperationException($"Cannot cancel an order with status '{order.Status}'.");
+            
+            order.Status = OrderStatus.Cancelled;
+            
+            var productIds = order.Items.Select(i => i.ProductId).Distinct().ToList();
+            var products = await _productRepository.GetByIdsAsync(productIds);
+            
+            foreach (var item in order.Items) // restock products
+            {
+                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
+                if (product is not null)
+                {
+                    product.StockQuantity += item.Qty;
+                }
+            }
+
+            await _uow.CommitAsync();
+        }
+
         public async Task DeleteAsync(int id)
         {
             var deleted = await _orderRepository.DeleteAsync(id);
@@ -104,12 +130,18 @@ namespace OrderSystem.Services
             var orderItems = new List<OrderItem>();
             var productIds = items.Select(i => i.ProductId).Distinct().ToList();
             var products = await _productRepository.GetByIdsAsync(productIds);
+            
             foreach (var item in items)
             {
                 var product = products.FirstOrDefault(p => p.Id == item.ProductId);
                 if (product is null)
                     throw new InvalidOperationException($"Product {item.ProductId} not found.");
                 
+                if(product.StockQuantity < item.Qty)
+                    throw new InvalidOperationException($"Insufficient stock for product {product.Name}. Requested: {item.Qty}, Available: {product.StockQuantity}.");
+
+                product.StockQuantity -= item.Qty;
+
                 var orderItem = new OrderItem
                 {
                     ProductId = product.Id,
@@ -136,7 +168,8 @@ namespace OrderSystem.Services
             {
                 (OrderStatus.New, OrderStatus.Paid) => true,
                 (OrderStatus.Paid, OrderStatus.Shipped) => true,
-                (OrderStatus.Paid, OrderStatus.New) => true,
+                (OrderStatus.Paid, OrderStatus.Cancelled) => true,
+                (OrderStatus.New, OrderStatus.Cancelled) => true,
                 _ => false
             };
         }

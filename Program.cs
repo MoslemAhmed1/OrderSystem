@@ -61,7 +61,9 @@ Upcoming Tasks:
 9- Use Hashing, Salting for Passwords, and use JWT for Authentication
 10- Use In-Memory caching, Redis is a plus
 11- Implement language translations
-12- Learn about EF Tracking
+12- Add StockQuantity to Product entity, and implement stock management in OrderService
+13- Add Cancelled Status to Order entity, and implement order cancellation in OrderService
+14- Learn about EF Tracking
 ----------------------------------------------------------------------
 Meeting Flow:
 - Models:

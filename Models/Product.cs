@@ -16,6 +16,7 @@ namespace OrderSystem.Models
         [Precision(18, 2)]
         public decimal Price { get; set; }
 
-        // TODO: Add StockQuantity and Update on each order, Validate OrderItem Qty against StockQuantity
+        [Required]
+        public int StockQuantity { get; set; } = 0;
     }
 }
