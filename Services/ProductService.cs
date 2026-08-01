@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using OrderSystem.DTOs.Products;
+using OrderSystem.Mappings;
 using OrderSystem.Models;
 using OrderSystem.Repositories;
 
@@ -9,37 +11,41 @@ namespace OrderSystem.Services
     {
         private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _uow;
+        //private readonly IMapper _mapper;
 
-        public ProductService(IProductRepository productRepository, IUnitOfWork uow)
+        public ProductService(IProductRepository productRepository, IUnitOfWork uow /*, IMapper mapper*/)
         {
             _productRepository = productRepository;
             _uow = uow;
+            //_mapper = mapper;
         }
 
         public async Task<ProductResponse?> GetByIdAsync(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
-            return product is null ? null : MapToResponse(product);
+
+            return product is null ? null : product.ToDto();
+            //return product is null ? null : _mapper.Map<ProductResponse>(product);
         }
 
         public async Task<List<ProductResponse>> GetAllAsync()
         {
             var products = await _productRepository.GetAllAsync();
-            return products.Select(MapToResponse).ToList();
+
+            return products.Select(product => product.ToDto()).ToList();
+            //return _mapper.Map<List<ProductResponse>>(products);
         }
 
         public async Task<ProductResponse> CreateAsync(CreateProductRequest request)
         {
-            var product = new Product
-            {
-                Name = request.Name,
-                Price = request.Price
-            };
+            var product = request.ToEntity();
+            //var product = _mapper.Map<Product>(request);
 
             await _productRepository.AddAsync(product);
             await _uow.CommitAsync();
 
-            return MapToResponse(product);
+            return product.ToDto();
+            //return _mapper.Map<ProductResponse>(product);
         }
 
         public async Task<ProductResponse?> UpdateAsync(int id, UpdateProductRequest request)
@@ -48,13 +54,14 @@ namespace OrderSystem.Services
             if (product is null)
                 return null;
 
-            product.Name = request.Name;
-            product.Price = request.Price;
+            product.UpdateFrom(request);
+            //_mapper.Map(request, product);
 
             _productRepository.Update(product);
             await _uow.CommitAsync();
 
-            return MapToResponse(product);
+            return product.ToDto();
+            //return _mapper.Map<ProductResponse>(product);
         }
 
         public async Task<DeleteResult> DeleteAsync(int id)
@@ -72,16 +79,6 @@ namespace OrderSystem.Services
             {
                 return DeleteResult.HasExistingOrders;
             }
-        }
-
-        private static ProductResponse MapToResponse(Product product)
-        {
-            return new ProductResponse
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Price = product.Price
-            };
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using OrderSystem.DTOs.Customers;
+using OrderSystem.Mappings;
 using OrderSystem.Models;
 using OrderSystem.Repositories;
 
@@ -9,38 +11,40 @@ namespace OrderSystem.Services
     {
         private readonly ICustomerRepository _customerRepository;
         private readonly IUnitOfWork _uow;
-
-        public CustomerService(ICustomerRepository customerRepository, IUnitOfWork uow)
+        //private readonly IMapper _mapper;
+        public CustomerService(ICustomerRepository customerRepository, IUnitOfWork uow /*, IMapper mapper*/)
         {
             _customerRepository = customerRepository;
             _uow = uow;
+            //_mapper = mapper;
         }
 
         public async Task<CustomerResponse?> GetByIdAsync(int id)
         {
             var customer = await _customerRepository.GetByIdAsync(id);
-            return customer is null ? null : MapToResponse(customer);
+            
+            return customer is null ? null : customer.ToDto();
+            //return customer is null ? null : _mapper.Map<CustomerResponse>(customer);
         }
 
         public async Task<List<CustomerResponse>> GetAllAsync()
         {
             var customers = await _customerRepository.GetAllAsync();
-            return customers.Select(MapToResponse).ToList();
+
+            return customers.Select(customer => customer.ToDto()).ToList();
+            //return _mapper.Map<List<CustomerResponse>>(customers);
         }
 
         public async Task<CustomerResponse> CreateAsync(CreateCustomerRequest request)
         {
-            var customer = new Customer
-            {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                CustomerType = request.CustomerType
-            };
+            var customer = request.ToEntity();
+            //var customer = _mapper.Map<Customer>(request);
 
             await _customerRepository.AddAsync(customer);
             await _uow.CommitAsync();
 
-            return MapToResponse(customer);
+            return customer.ToDto();
+            //return _mapper.Map<CustomerResponse>(customer);
         }
 
         public async Task<CustomerResponse?> UpdateAsync(int id, UpdateCustomerRequest request)
@@ -49,14 +53,14 @@ namespace OrderSystem.Services
             if (customer is null)
                 return null;
 
-            customer.FirstName = request.FirstName;
-            customer.LastName = request.LastName;
-            customer.CustomerType = request.CustomerType;
+            customer.UpdateFrom(request);
+            //_mapper.Map(request, customer);
 
             _customerRepository.Update(customer);
             await _uow.CommitAsync();
 
-            return MapToResponse(customer);
+            return customer.ToDto();
+            //return _mapper.Map<CustomerResponse>(customer);
         }
 
         public async Task<DeleteResult> DeleteAsync(int id)
@@ -75,17 +79,6 @@ namespace OrderSystem.Services
             {
                 return DeleteResult.HasExistingOrders;
             }
-        }
-
-        private static CustomerResponse MapToResponse(Customer customer)
-        {
-            return new CustomerResponse
-            {
-                Id = customer.Id,
-                FirstName = customer.FirstName,
-                LastName = customer.LastName,
-                CustomerType = customer.CustomerType.ToString()
-            };
         }
     }
 }

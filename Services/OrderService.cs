@@ -1,4 +1,6 @@
-﻿using OrderSystem.DTOs.Orders;
+﻿using AutoMapper;
+using OrderSystem.DTOs.Orders;
+using OrderSystem.Mappings;
 using OrderSystem.Models;
 using OrderSystem.Repositories;
 using OrderSystem.Services.Discount;
@@ -12,24 +14,34 @@ namespace OrderSystem.Services
         private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _uow;
         private readonly IDiscountPolicy _discountPolicy;
-        public OrderService(IOrderRepository orderRepository, ICustomerRepository customerRepository, IProductRepository productRepository, IUnitOfWork uow, IDiscountPolicy discountPolicy)
+        //private readonly IMapper _mapper;
+
+        public OrderService(IOrderRepository orderRepository, ICustomerRepository customerRepository, IProductRepository productRepository, IUnitOfWork uow, IDiscountPolicy discountPolicy /*, IMapper mapper*/)
         {
             _orderRepository = orderRepository;
             _customerRepository = customerRepository;
             _productRepository = productRepository;
             _uow = uow;
             _discountPolicy = discountPolicy;
+            //_mapper = mapper;
         }
+        
         public async Task<OrderResponse?> GetByIdAsync(int id)
         {
             var order = await _orderRepository.GetByIdAsync(id);
-            return (order is null ? null : MapToResponse(order));
+            
+            return (order is null ? null : order.ToDto());
+            //return (order is null ? null : _mapper.Map<OrderResponse>(order));
         }
+        
         public async Task<List<OrderResponse>> GetAllAsync()
         {
             var orders = await _orderRepository.GetAllAsync();
-            return orders.Select(MapToResponse).ToList();
+            
+            return orders.Select(order => order.ToDto()).ToList();
+            //return _mapper.Map<List<OrderResponse>>(orders);
         }
+        
         public async Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request)
         {
             var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
@@ -51,7 +63,9 @@ namespace OrderSystem.Services
             await _uow.CommitAsync();
 
             //var savedOrder = await _uow.Orders.GetByIdAsync(order.Id); // TODO: this or populate customer & product above ?
-            return MapToResponse(order);
+            
+            return order.ToDto();
+            //return _mapper.Map<OrderResponse>(order);
         }
 
         public async Task<OrderResponse?> UpdateStatusAsync(int id, OrderStatus newStatus)
@@ -66,7 +80,8 @@ namespace OrderSystem.Services
             order.Status = newStatus;
             await _uow.CommitAsync();
 
-            return MapToResponse(order);
+            return order.ToDto();
+            //return _mapper.Map<OrderResponse>(order);
         }
 
         public async Task<OrderResponse?> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems)
@@ -78,6 +93,8 @@ namespace OrderSystem.Services
             if (order.Status != OrderStatus.New)
                 throw new InvalidOperationException("Only orders with status 'New' can have their items updated.");
 
+            await RestockItems(order.Items);
+
             var items = await BuildItems(newItems);
             order.Items.Clear();
             foreach (var item in items)
@@ -87,7 +104,8 @@ namespace OrderSystem.Services
 
             await _uow.CommitAsync();
 
-            return MapToResponse(order);
+            return order.ToDto();
+            //return _mapper.Map<OrderResponse>(order);
         }
 
         public async Task CancelOrderAsync(int id)
@@ -100,28 +118,20 @@ namespace OrderSystem.Services
                 throw new InvalidOperationException($"Cannot cancel an order with status '{order.Status}'.");
             
             order.Status = OrderStatus.Cancelled;
-            
-            var productIds = order.Items.Select(i => i.ProductId).Distinct().ToList();
-            var products = await _productRepository.GetByIdsAsync(productIds);
-            
-            foreach (var item in order.Items) // restock products
-            {
-                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
-                if (product is not null)
-                {
-                    product.StockQuantity += item.Qty;
-                }
-            }
+            await RestockItems(order.Items);
 
             await _uow.CommitAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var deleted = await _orderRepository.DeleteAsync(id);
-            if (!deleted)
+            var order = await _orderRepository.GetByIdAsync(id);
+            if (order is null)
                 throw new InvalidOperationException($"Order {id} not found.");
 
+            await RestockItems(order.Items);
+
+            await _orderRepository.DeleteAsync(id);
             await _uow.CommitAsync();
         }
 
@@ -155,6 +165,19 @@ namespace OrderSystem.Services
             return orderItems;
        }
 
+        private async Task RestockItems(IEnumerable<OrderItem> items)
+        {
+            var productIds = items.Select(i => i.ProductId).Distinct().ToList();
+            var products = await _productRepository.GetByIdsAsync(productIds);
+
+            foreach (var item in items)
+            {
+                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
+                if (product is not null)
+                    product.StockQuantity += item.Qty;
+            }
+        }
+
         private decimal CalculateTotal(List<OrderItem> items, CustomerType customerType)
         {
             var total = items.Sum(i => i.Qty * i.UnitPrice);
@@ -171,26 +194,6 @@ namespace OrderSystem.Services
                 (OrderStatus.Paid, OrderStatus.Cancelled) => true,
                 (OrderStatus.New, OrderStatus.Cancelled) => true,
                 _ => false
-            };
-        }
-
-        private static OrderResponse MapToResponse(Order order)
-        {
-            return new OrderResponse
-            {
-                Id = order.Id,
-                CustomerName = $"{order.Customer.FirstName} {order.Customer.LastName}",
-                CustomerType = order.Customer.CustomerType.ToString(),
-                Status = order.Status.ToString(),
-                Total = order.Total,
-                CreatedAt = order.CreatedAt,
-                Items = order.Items.Select(i => new OrderItemResponse
-                {
-                    Id = i.Id,
-                    ProductName = i.Product.Name,
-                    Qty = i.Qty,
-                    UnitPrice = i.UnitPrice
-                }).ToList()
             };
         }
     }

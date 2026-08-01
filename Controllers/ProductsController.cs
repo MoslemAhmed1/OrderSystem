@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OrderSystem.DTOs.Products;
+using OrderSystem.Mappings;
 using OrderSystem.Services;
 
 namespace OrderSystem.Controllers
@@ -20,6 +21,19 @@ namespace OrderSystem.Controllers
         {
             var product = await _productService.GetByIdAsync(id);
             return product is null ? NotFound() : Ok(product);
+        }
+
+        [HttpGet("{id}/view")]
+        public async Task<IActionResult> GetByIdAsViewModel(int id)
+        {
+            var product = await _productService.GetByIdAsync(id);
+            if (product is null)
+                return NotFound();
+
+            var viewModel = product.ToViewModel();   
+            // var viewModel = _mapper.Map<ProductViewModel>(product);
+
+            return Ok(viewModel);
         }
 
         [HttpGet]

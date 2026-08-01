@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OrderSystem.Data;
+using OrderSystem.Mappings;
 using OrderSystem.Repositories;
 using OrderSystem.Services;
 using OrderSystem.Services.Discount;
@@ -17,6 +18,12 @@ builder.Services.AddDbContext<OrderContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("OrderSystemDb"));
 });
+
+builder.Services.AddAutoMapper(cfg => { },
+    typeof(ProductMappingProfile),
+    typeof(CustomerMappingProfile),
+    typeof(OrderMappingProfile)
+    );
 
 // Repositories
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
