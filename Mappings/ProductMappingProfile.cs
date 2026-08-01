@@ -18,7 +18,7 @@ namespace OrderSystem.Mappings
 
             // Dto -> ViewModel
             CreateMap<ProductResponse, ProductViewModel>()
-                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name.ToUpperInvariant()))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.FormattedPrice, opt => opt.MapFrom(src => $"${src.Price:F2}"))
                 .ForMember(dest => dest.IsLowStock, opt => opt.MapFrom(src => src.StockQuantity < 5))
                 .ForMember(dest => dest.StockStatus, opt => opt.MapFrom(src =>

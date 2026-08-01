@@ -41,7 +41,7 @@ namespace OrderSystem.Mappings
         {
             return new ProductViewModel
             {
-                Name = dto.Name.ToUpperInvariant(),
+                Name = dto.Name,
                 FormattedPrice = $"${dto.Price:F2}",
                 IsLowStock = dto.StockQuantity < 5,
                 StockStatus = dto.StockQuantity switch

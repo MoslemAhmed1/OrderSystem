@@ -16,6 +16,9 @@ GET {{OrderSystem_HostAddress}}/Products
 ### Get Product by Id
 GET {{OrderSystem_HostAddress}}/Products/7
 
+### Get Product by Id ViewModel
+GET {{OrderSystem_HostAddress}}/Products/7/view
+
 ### Update Product
 PUT {{OrderSystem_HostAddress}}/Products/7
 Content-Type: application/json
@@ -23,7 +26,7 @@ Content-Type: application/json
 {
   "name": "Laptop v2",
   "price": 1299.00,
-  "stockQuantity": 7
+  "stockQuantity": 3
 }
 
 ### Create Customer
