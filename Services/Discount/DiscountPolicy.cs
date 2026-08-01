@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using OrderSystem.Models;
 
 namespace OrderSystem.Services.Discount

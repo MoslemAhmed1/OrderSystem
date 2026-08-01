@@ -12,7 +12,7 @@ using OrderSystem.Data;
 namespace OrderSystem.Migrations
 {
     [DbContext(typeof(OrderContext))]
-    [Migration("20260731210640_AddStockQuantityAndCancelledStatus")]
+    [Migration("20260801151249_AddStockQuantityAndCancelledStatus")]
     partial class AddStockQuantityAndCancelledStatus
     {
         /// <inheritdoc />

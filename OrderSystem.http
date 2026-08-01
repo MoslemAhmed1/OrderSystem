@@ -6,22 +6,24 @@ Content-Type: application/json
 
 {
   "name": "Gaming Laptop",
-  "price": 1899.99
+  "price": 1899.99,
+  "stockQuantity": 1
 }
 
 ### Get all Products
 GET {{OrderSystem_HostAddress}}/Products
 
 ### Get Product by Id
-GET {{OrderSystem_HostAddress}}/Products/5
+GET {{OrderSystem_HostAddress}}/Products/7
 
 ### Update Product
-PUT {{OrderSystem_HostAddress}}/Products/5
+PUT {{OrderSystem_HostAddress}}/Products/7
 Content-Type: application/json
 
 {
-  "name": "Sneakers v2",
-  "price": 54.00
+  "name": "Laptop v2",
+  "price": 1299.00,
+  "stockQuantity": 7
 }
 
 ### Create Customer
@@ -81,7 +83,7 @@ Content-Type: application/json
 DELETE {{OrderSystem_HostAddress}}/Orders/5
 
 ### Delete Product
-DELETE {{OrderSystem_HostAddress}}/Products/6
+DELETE {{OrderSystem_HostAddress}}/Products/10
 
 ### Delete Customer
 DELETE {{OrderSystem_HostAddress}}/Customers/4

@@ -15,6 +15,7 @@ namespace OrderSystem.DTOs.Products
         public decimal Price { get; set; }
 
         [Required]
+        [Range(0, int.MaxValue, ErrorMessage = "StockQuantity must be a positive number")]
         public int StockQuantity { get; set; }
     }
 }

@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OrderSystem.Common;
 using OrderSystem.Data;
 using OrderSystem.Mappings;
+using OrderSystem.Middleware;
 using OrderSystem.Repositories;
 using OrderSystem.Services;
 using OrderSystem.Services.Discount;
@@ -11,6 +14,19 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .SelectMany(entry => entry.Value!.Errors.Select(e => $"{entry.Key}: {e.ErrorMessage}"))
+                .ToList();
+
+            var response = ApiResponse.Fail("Validation failed.", StatusCodes.Status400BadRequest, errors);
+            return new BadRequestObjectResult(response);
+        };
     });
 builder.Services.AddOpenApi();
 
@@ -24,6 +40,8 @@ builder.Services.AddAutoMapper(cfg => { },
     typeof(CustomerMappingProfile),
     typeof(OrderMappingProfile)
     );
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // Repositories
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -39,6 +57,8 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
@@ -58,12 +78,12 @@ app.Run();
 /*
 Upcoming Tasks:
 1- Try moving Discount to appsettings.json, so any discount can be applied without changing the code [Done]
-2- Unit of Work: remove repositories, each service will have an instance of uow and the repositories it needs only
-3- OrderService: for loop in BuildItems() which gets products by id, add a function in OrderRepository which gets all products by a list of ids, and then use that function in OrderService
-4- Apply: ViewModel <-> DTO <-> Entity mapping
-5- Controllers: use Generic Response structure which contains (StatusCode, Message, Data, Errors)
-6- Learn & Apply Clean Architecture
-7- Learn & Apply Middleware, Exception Handling, Logging
+2- Unit of Work: remove repositories, each service will have an instance of uow and the repositories it needs only [Done]
+3- OrderService: for loop in BuildItems() which gets products by id, add a function in OrderRepository which gets all products by a list of ids, and then use that function in OrderService [Done]
+4- Apply: ViewModel <-> DTO <-> Entity mapping [Done]
+5- Controllers: use Generic Response structure which contains (StatusCode, Message, Data, Errors) [Done]
+6- Learn & Apply Middleware, Exception Handling, Logging
+7- Learn & Apply Clean Architecture
 8- Authentication/Authorization: use JWT with Access & Refresh tokens, handle multiple sessions from Websites, Mobiles, etc..
 9- Use Hashing, Salting for Passwords, and use JWT for Authentication
 10- Use In-Memory caching, Redis is a plus

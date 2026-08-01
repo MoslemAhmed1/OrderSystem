@@ -20,6 +20,7 @@ namespace OrderSystem.Models
 
         public OrderStatus Status { get; set; }
 
+        [Required]
         [Precision(18, 2)]
         public decimal Total { get; set; }
 

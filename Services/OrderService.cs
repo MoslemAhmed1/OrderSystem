@@ -26,12 +26,15 @@ namespace OrderSystem.Services
             //_mapper = mapper;
         }
         
-        public async Task<OrderResponse?> GetByIdAsync(int id)
+        public async Task<OrderResponse> GetByIdAsync(int id)
         {
             var order = await _orderRepository.GetByIdAsync(id);
-            
-            return (order is null ? null : order.ToDto());
-            //return (order is null ? null : _mapper.Map<OrderResponse>(order));
+
+            if(order is null)
+                throw new KeyNotFoundException($"Order {id} not found.");
+
+            return order.ToDto();
+            //return _mapper.Map<OrderResponse>(order);
         }
         
         public async Task<List<OrderResponse>> GetAllAsync()
@@ -46,7 +49,7 @@ namespace OrderSystem.Services
         {
             var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
             if (customer is null)
-                throw new InvalidOperationException($"Customer {request.CustomerId} not found.");
+                throw new KeyNotFoundException($"Customer {request.CustomerId} not found.");
 
             var items = await BuildItems(request.Items);
             var order = new Order
@@ -68,13 +71,13 @@ namespace OrderSystem.Services
             //return _mapper.Map<OrderResponse>(order);
         }
 
-        public async Task<OrderResponse?> UpdateStatusAsync(int id, OrderStatus newStatus)
+        public async Task<OrderResponse> UpdateStatusAsync(int id, OrderStatus newStatus)
         {
             var order = await _orderRepository.GetByIdAsync(id);
-            if (order is null) 
-                return null;
+            if (order is null)
+                throw new KeyNotFoundException($"Order {id} not found.");
 
-            if(!IsValidTransition(order.Status, newStatus))
+            if (!IsValidTransition(order.Status, newStatus))
                 throw new InvalidOperationException($"Cannot transition order from {order.Status} to {newStatus}.");
 
             order.Status = newStatus;
@@ -84,11 +87,11 @@ namespace OrderSystem.Services
             //return _mapper.Map<OrderResponse>(order);
         }
 
-        public async Task<OrderResponse?> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems)
+        public async Task<OrderResponse> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems)
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
-                return null;
+                throw new KeyNotFoundException($"Order {id} not found.");
 
             if (order.Status != OrderStatus.New)
                 throw new InvalidOperationException("Only orders with status 'New' can have their items updated.");
@@ -112,7 +115,7 @@ namespace OrderSystem.Services
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
-                throw new InvalidOperationException($"Order {id} not found.");
+                throw new KeyNotFoundException($"Order {id} not found.");
             
             if (!IsValidTransition(order.Status, OrderStatus.Cancelled))
                 throw new InvalidOperationException($"Cannot cancel an order with status '{order.Status}'.");
@@ -127,7 +130,7 @@ namespace OrderSystem.Services
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
-                throw new InvalidOperationException($"Order {id} not found.");
+                throw new KeyNotFoundException($"Order {id} not found.");
 
             await RestockItems(order.Items);
 
@@ -145,7 +148,7 @@ namespace OrderSystem.Services
             {
                 var product = products.FirstOrDefault(p => p.Id == item.ProductId);
                 if (product is null)
-                    throw new InvalidOperationException($"Product {item.ProductId} not found.");
+                    throw new KeyNotFoundException($"Product {item.ProductId} not found.");
                 
                 if(product.StockQuantity < item.Qty)
                     throw new InvalidOperationException($"Insufficient stock for product {product.Name}. Requested: {item.Qty}, Available: {product.StockQuantity}.");
