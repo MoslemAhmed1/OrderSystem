@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../OrderSystem.Application/OrderSystem.Application.csproj" Id="ebdd80b6-6d46-4af6-9e0c-2f9fc125fbe9" />
+  <Project Path="../OrderSystem.Domain/OrderSystem.Domain.csproj" Id="ad8843d9-9f74-4fce-90b4-9f41b5ae51f3" />
+  <Project Path="../OrderSystem.Infrastructure/OrderSystem.Infrastructure.csproj" Id="13ba6e52-dc9f-4b97-8eb4-9bd0a087eb4e" />
+  <Project Path="OrderSystem.csproj" />
+</Solution>
