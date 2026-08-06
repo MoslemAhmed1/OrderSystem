@@ -1,5 +1,4 @@
 using OrderSystem.Domain.Entities;
-using System.Security.Claims;
 
 namespace OrderSystem.Application.Interfaces.Services
 {
@@ -7,7 +6,6 @@ namespace OrderSystem.Application.Interfaces.Services
     {
         string GenerateAccessToken(User user);
         string GenerateRefreshToken();
-        ClaimsPrincipal? ValidateToken(string token);
         string HashToken(string token);
         DateTime GetAccessTokenExpiry();
         DateTime GetRefreshTokenExpiry();

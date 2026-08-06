@@ -25,12 +25,6 @@ namespace OrderSystem.Infrastructure.Repositories
                 .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
         }
 
-        public async Task<User?> GetByEmailAsync(string email)
-        {
-            return await _orderContext.Users
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
-        }
-
         public async Task CreateAsync(User user)
         {
             await _orderContext.Users.AddAsync(user);
@@ -41,16 +35,17 @@ namespace OrderSystem.Infrastructure.Repositories
             _orderContext.Users.Update(user);
         }
 
-        public async Task<bool> UsernameExistsAsync(string username)
+        public async Task<(bool UsernameExists, bool EmailExists)> CheckUserExistsAsync(string username, string email)
         {
-            return await _orderContext.Users
-                .AnyAsync(u => u.Username.ToLower() == username.ToLower());
-        }
-
-        public async Task<bool> EmailExistsAsync(string email)
-        {
-            return await _orderContext.Users
-                .AnyAsync(u => u.Email.ToLower() == email.ToLower());
+            var matches = await _orderContext.Users
+                .Where(u => u.Username.ToLower() == username.ToLower() || u.Email.ToLower() == email.ToLower())
+                .Select(u => new { u.Username, u.Email })
+                .ToListAsync();
+            
+            return (
+                matches.Any(u => u.Username.ToLower() == username.ToLower()),
+                matches.Any(u => u.Email.ToLower() == email.ToLower())
+            );
         }
     }
 }

@@ -94,7 +94,6 @@ namespace OrderSystem.Infrastructure.Services
                 throw new InvalidOperationException(_translation.Translate("OrderStatusTransitionInvalid", order.Status, newStatus));
 
             order.Status = newStatus;
-            _orderRepository.Update(order); // ASK: inconsistency between services in explicit update
             await _uow.CommitAsync();
 
             return order.ToDto();
@@ -121,7 +120,6 @@ namespace OrderSystem.Infrastructure.Services
 
             order.Total = CalculateTotal(items, order.Customer.CustomerType);
 
-            _orderRepository.Update(order); // ASK: inconsistency between services in explicit update
             await _uow.CommitAsync();
 
             var allAffectedIds = oldProductIds.Union(newProductIds).ToList();
@@ -142,7 +140,6 @@ namespace OrderSystem.Infrastructure.Services
             order.Status = OrderStatus.Cancelled;
             var affectedProductIds = await RestockItems(order.Items);
 
-            _orderRepository.Update(order); // ASK: inconsistency between services in explicit update
             await _uow.CommitAsync();
 
             await InvalidateProductCacheAsync(affectedProductIds);
@@ -193,7 +190,7 @@ namespace OrderSystem.Infrastructure.Services
             return (orderItems, productIds);
         }
 
-        private async Task<List<int>> RestockItems(List<OrderItem> items)
+        private async Task<List<int>> RestockItems(ICollection<OrderItem> items)
         {
             var productIds = items.Select(i => i.ProductId).Distinct().ToList();
             var products = await _productRepository.GetByIdsAsync(productIds);

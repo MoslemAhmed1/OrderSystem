@@ -37,7 +37,7 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(CreateProductViewModel request)
         {
             var product = await _productService.CreateAsync(request.ToDto());
@@ -45,7 +45,7 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, UpdateProductViewModel request)
         {
             var product = await _productService.UpdateAsync(id, request.ToDto());
@@ -53,7 +53,7 @@ namespace OrderSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _productService.DeleteAsync(id);

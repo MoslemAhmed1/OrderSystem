@@ -31,10 +31,11 @@ namespace OrderSystem.Infrastructure.Services
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
         {
-            if (await _userRepository.UsernameExistsAsync(request.Username))
+            var (usernameExists, emailExists) = await _userRepository.CheckUserExistsAsync(request.Username, request.Email);
+            if (usernameExists)
                 throw new InvalidOperationException(_translation.Translate("UsernameExists"));
 
-            if (await _userRepository.EmailExistsAsync(request.Email))
+            if (emailExists)
                 throw new InvalidOperationException(_translation.Translate("EmailExists"));
 
             var user = new User

@@ -43,32 +43,6 @@ namespace OrderSystem.Infrastructure.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public ClaimsPrincipal? ValidateToken(string token)
-        {
-            try
-            {
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Secret));
-                var tokenHandler = new JwtSecurityTokenHandler();
-
-                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters // ASK: shouldn't this be configured in program.cs ??
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = key,
-                    ValidateIssuer = true,
-                    ValidIssuer = _options.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = _options.Audience,
-                    ValidateLifetime = true,
-                }, out SecurityToken validatedToken);
-
-                return principal;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
         public string GenerateRefreshToken()
         {
             var randomNumber = RandomNumberGenerator.GetBytes(64);

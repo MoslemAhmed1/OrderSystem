@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OrderSystem.Domain.Entities;
 
 namespace OrderSystem.Infrastructure.Data
@@ -18,21 +18,40 @@ namespace OrderSystem.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Store enums as strings
+            // Customer
+            modelBuilder.Entity<Customer>()
+                .Property(c => c.FirstName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Customer>()
+                .Property(c => c.LastName)
+                .IsRequired()
+                .HasMaxLength(50);
+
             modelBuilder.Entity<Customer>()
                 .Property(c => c.CustomerType)
                 .HasConversion<string>()
                 .HasMaxLength(20);
 
+            // Product
+            modelBuilder.Entity<Product>()
+                .Property(p => p.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+
+            // OrderItem
+            modelBuilder.Entity<OrderItem>().Property(i => i.UnitPrice).HasPrecision(18, 2);
+
+            // Order
             modelBuilder.Entity<Order>()
                 .Property(o => o.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20);
 
-            modelBuilder.Entity<User>()
-                .Property(u => u.Role)
-                .HasConversion<string>()
-                .HasMaxLength(20);
+            modelBuilder.Entity<Order>().Property(o => o.Total).HasPrecision(18, 2);
 
             // Order -> Customer: Many-One, Required
             modelBuilder.Entity<Order>()
@@ -57,14 +76,30 @@ namespace OrderSystem.Infrastructure.Data
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Order>().Property(o => o.Total).HasPrecision(18, 2);
-            modelBuilder.Entity<OrderItem>().Property(i => i.UnitPrice).HasPrecision(18, 2);
-            modelBuilder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+            // User
+            modelBuilder.Entity<User>()
+                .Property(u => u.Username)
+                .IsRequired()
+                .HasMaxLength(50);
 
+            modelBuilder.Entity<User>()
+                .Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(256);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.PasswordHash)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Role)
+                .HasConversion<string>()
+                .HasMaxLength(20);
 
             modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
+            // RefreshToken
             modelBuilder.Entity<RefreshToken>()
                 .HasOne(rt => rt.User)
                 .WithMany(u => u.RefreshTokens)

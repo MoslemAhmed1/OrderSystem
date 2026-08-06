@@ -13,13 +13,13 @@ namespace OrderSystem.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
-            Interlocked.Increment(ref _counter);
+            _counter++;
             double secondsDifference = DateTime.UtcNow.Subtract(_lastRequestDate).TotalSeconds;
             _lastRequestDate = DateTime.UtcNow;
 
             if (secondsDifference > 10)
             {
-                Interlocked.Exchange(ref _counter, 1);
+                _counter = 1;
                 await _next(context);
             }
             else

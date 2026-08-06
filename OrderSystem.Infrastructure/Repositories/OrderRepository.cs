@@ -45,15 +45,5 @@ namespace OrderSystem.Infrastructure.Repositories
             _orderContext.Orders.Remove(order);
         }
 
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var order = await _orderContext.Orders.FindAsync(id);
-            if (order != null)
-            {
-                _orderContext.Orders.Remove(order);
-                return true;
-            }
-            return false;
-        }
     }
 }

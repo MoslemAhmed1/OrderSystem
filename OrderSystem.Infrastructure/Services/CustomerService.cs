@@ -54,7 +54,6 @@ namespace OrderSystem.Infrastructure.Services
 
             customer.UpdateFrom(request);
 
-            _customerRepository.Update(customer);
             await _uow.CommitAsync();
 
             return customer.ToDto();

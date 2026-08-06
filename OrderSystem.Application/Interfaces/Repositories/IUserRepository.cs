@@ -6,10 +6,8 @@ namespace OrderSystem.Application.Interfaces.Repositories
     {
         Task<User?> GetByIdAsync(int id);
         Task<User?> GetByUsernameAsync(string username);
-        Task<User?> GetByEmailAsync(string email);
         Task CreateAsync(User user);
         void Update(User user);
-        Task<bool> UsernameExistsAsync(string username);
-        Task<bool> EmailExistsAsync(string email);
+        Task<(bool UsernameExists, bool EmailExists)> CheckUserExistsAsync(string username, string email);
     }
 }

@@ -79,7 +79,6 @@ namespace OrderSystem.Infrastructure.Services
 
             product.UpdateFrom(request);
 
-            _productRepository.Update(product);
             await _uow.CommitAsync();
 
             var response = product.ToDto();

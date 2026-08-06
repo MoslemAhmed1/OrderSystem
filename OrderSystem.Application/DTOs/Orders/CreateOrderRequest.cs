@@ -4,6 +4,7 @@ namespace OrderSystem.Application.DTOs.Orders
 {
     public class CreateOrderRequest
     {
+        [Required]
         public int CustomerId { get; set; }
 
         // Minimum 1 item is enforced in the service layer (MinLength does not work on List<T>)

@@ -9,6 +9,5 @@ namespace OrderSystem.Application.Interfaces.Repositories
         Task AddAsync(Order order);
         void Update(Order order);
         void Delete(Order order);
-        Task<bool> DeleteAsync(int id);
     }
 }

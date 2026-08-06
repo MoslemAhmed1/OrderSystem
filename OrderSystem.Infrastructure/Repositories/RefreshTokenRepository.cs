@@ -34,11 +34,6 @@ namespace OrderSystem.Infrastructure.Repositories
             await _orderContext.RefreshTokens.AddAsync(token);
         }
 
-        public void Update(RefreshToken token)
-        {
-            _orderContext.RefreshTokens.Update(token);
-        }
-
         public async Task<int> RevokeAllForUserAsync(int userId)
         {
             var tokens = await _orderContext.RefreshTokens
