@@ -158,7 +158,7 @@ namespace OrderSystem.Infrastructure.Services
             // Cancelled orders had their stock returned in CancelOrderAsync,
             // so restocking again here would incorrectly double the quantity.
             List<int> affectedProductIds = [];
-            if (order.Status != OrderStatus.Cancelled)
+            if (order.Status == OrderStatus.New || order.Status == OrderStatus.Paid)
                 affectedProductIds = await RestockItems(order.Items);
 
             _orderRepository.Delete(order);
@@ -196,7 +196,7 @@ namespace OrderSystem.Infrastructure.Services
             return (orderItems, productIds);
         }
 
-        private async Task<List<int>> RestockItems(IEnumerable<OrderItem> items)
+        private async Task<List<int>> RestockItems(List<OrderItem> items)
         {
             var productIds = items.Select(i => i.ProductId).Distinct().ToList();
             var products = await _productRepository.GetByIdsAsync(productIds);
@@ -211,7 +211,7 @@ namespace OrderSystem.Infrastructure.Services
             return productIds;
         }
 
-        private async Task InvalidateProductCacheAsync(IEnumerable<int> productIds)
+        private async Task InvalidateProductCacheAsync(List<int> productIds)
         {
             foreach (var id in productIds)
                 await _cache.RemoveAsync($"product_{id}");
