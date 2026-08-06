@@ -11,5 +11,8 @@ namespace OrderSystem.Domain.Entities
         public required string LastName { get; set; }
 
         public CustomerType CustomerType { get; set; }
+
+        public int? UserId { get; set; }
+        public User? User { get; set; }
     }
 }

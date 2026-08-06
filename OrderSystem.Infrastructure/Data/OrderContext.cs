@@ -34,6 +34,14 @@ namespace OrderSystem.Infrastructure.Data
                 .HasConversion<string>()
                 .HasMaxLength(20);
 
+            // User -> Customer: One-to-One
+            modelBuilder.Entity<Customer>()
+                .HasOne(c => c.User)
+                .WithOne()
+                .HasForeignKey<Customer>(c => c.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull); // TODO: I think should cascade
+
             // Product
             modelBuilder.Entity<Product>()
                 .Property(p => p.Name)

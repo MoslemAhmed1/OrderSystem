@@ -17,6 +17,13 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             return await _orderContext.Customers.FindAsync(id);
         }
+
+        public async Task<Customer?> GetByUserIdAsync(int userId)
+        {
+            return await _orderContext.Customers
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+        }
+
         public async Task<List<Customer>> GetAllAsync()
         {
             return await _orderContext.Customers.ToListAsync();

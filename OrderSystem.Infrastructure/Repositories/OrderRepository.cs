@@ -30,6 +30,15 @@ namespace OrderSystem.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Order>> GetAllByCustomerIdAsync(int customerId)
+        {
+            return await _orderContext.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.Items).ThenInclude(i => i.Product)
+                .Where(o => o.CustomerId == customerId)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(Order order)
         {
             await _orderContext.Orders.AddAsync(order);

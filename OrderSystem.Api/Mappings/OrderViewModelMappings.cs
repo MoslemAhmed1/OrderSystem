@@ -1,4 +1,4 @@
-﻿using OrderSystem.Application.DTOs.Orders;
+using OrderSystem.Application.DTOs.Orders;
 using OrderSystem.ViewModels.Orders;
 
 namespace OrderSystem.Mappings
@@ -18,7 +18,6 @@ namespace OrderSystem.Mappings
         {
             return new CreateOrderRequest
             {
-                CustomerId = vm.CustomerId,
                 Items = vm.Items.Select(i => i.ToDto()).ToList()
             };
         }

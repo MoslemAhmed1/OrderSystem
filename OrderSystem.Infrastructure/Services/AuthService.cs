@@ -3,6 +3,7 @@ using OrderSystem.Application.DTOs.Auth;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
 using OrderSystem.Domain.Entities;
+using OrderSystem.Domain.Enums;
 
 namespace OrderSystem.Infrastructure.Services
 {
@@ -10,20 +11,23 @@ namespace OrderSystem.Infrastructure.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly ICustomerRepository _customerRepository;
         private readonly IUnitOfWork _uow;
         private readonly ITokenService _tokenService;
         private readonly ITranslationService _translation;
         private readonly PasswordHasher<User> _passwordHasher = new PasswordHasher<User>();
 
         public AuthService(
-            IUserRepository userRepository, 
-            IRefreshTokenRepository refreshTokenRepository, 
-            IUnitOfWork uow, 
-            ITokenService tokenService, 
+            IUserRepository userRepository,
+            IRefreshTokenRepository refreshTokenRepository,
+            ICustomerRepository customerRepository,
+            IUnitOfWork uow,
+            ITokenService tokenService,
             ITranslationService translation)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
+            _customerRepository = customerRepository;
             _uow = uow;
             _tokenService = tokenService;
             _translation = translation;
@@ -45,9 +49,18 @@ namespace OrderSystem.Infrastructure.Services
                 PasswordHash = "",
             };
             user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-
             await _userRepository.CreateAsync(user);
-            await _uow.CommitAsync();
+            await _uow.CommitAsync(); 
+
+            var customer = new Customer
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                CustomerType = CustomerType.Regular,
+                UserId = user.Id
+            };
+            await _customerRepository.AddAsync(customer);
+            await _uow.CommitAsync(); // TODO: i think not needed
 
             var response = await IssueTokensAsync(user, null);
             await _uow.CommitAsync();

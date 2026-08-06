@@ -36,31 +36,50 @@ namespace OrderSystem.Infrastructure.Services
             _cache = cache;
         }
         
-        public async Task<OrderResponse> GetByIdAsync(int id)
+        public async Task<OrderResponse> GetByIdAsync(int id, int userId, bool isAdmin)
         {
             var order = await _orderRepository.GetByIdAsync(id);
 
             if (order is null)
                 throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
+            if(!isAdmin)
+            {
+                if (order.Customer.UserId != userId)
+                    throw new UnauthorizedAccessException(_translation.Translate("OrderAccessDenied"));
+            }
+            
             return order.ToDto();
         }
         
-        public async Task<List<OrderResponse>> GetAllAsync()
+        public async Task<List<OrderResponse>> GetAllAsync(int userId, bool isAdmin)
         {
-            var orders = await _orderRepository.GetAllAsync();
-            
+            List<Order> orders;
+
+            if (isAdmin)
+            {
+                orders = await _orderRepository.GetAllAsync();
+            }
+            else
+            {
+                var customer = await _customerRepository.GetByUserIdAsync(userId);
+                if(customer is null)
+                    throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", userId));
+
+                orders = await _orderRepository.GetAllByCustomerIdAsync(customer.Id);
+            }
+
             return orders.Select(order => order.ToDto()).ToList();
         }
         
-        public async Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request)
+        public async Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request, int userId)
         {
             if (request.Items is null || request.Items.Count == 0)
                 throw new ArgumentException(_translation.Translate("OrderItemsEmpty"));
 
-            var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
+            var customer = await _customerRepository.GetByUserIdAsync(userId);
             if (customer is null)
-                throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", request.CustomerId));
+                throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", userId));
 
             var (items, affectedProductIds) = await BuildItems(request.Items);
             var order = new Order
@@ -84,11 +103,14 @@ namespace OrderSystem.Infrastructure.Services
             return savedOrder.ToDto();
         }
 
-        public async Task<OrderResponse> UpdateStatusAsync(int id, OrderStatus newStatus)
+        public async Task<OrderResponse> UpdateStatusAsync(int id, OrderStatus newStatus, int userId, bool isAdmin)
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
                 throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
+
+            if (!isAdmin && order.Customer.UserId != userId)
+                throw new UnauthorizedAccessException(_translation.Translate("OrderAccessDenied"));
 
             if (!IsValidTransition(order.Status, newStatus))
                 throw new InvalidOperationException(_translation.Translate("OrderStatusTransitionInvalid", order.Status, newStatus));
@@ -99,7 +121,7 @@ namespace OrderSystem.Infrastructure.Services
             return order.ToDto();
         }
 
-        public async Task<OrderResponse> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems)
+        public async Task<OrderResponse> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems, int userId, bool isAdmin)
         {
             if (newItems is null || newItems.Count == 0)
                 throw new ArgumentException(_translation.Translate("OrderItemsEmpty"));
@@ -107,6 +129,9 @@ namespace OrderSystem.Infrastructure.Services
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
                 throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
+
+            if (!isAdmin && order.Customer.UserId != userId)
+                throw new UnauthorizedAccessException(_translation.Translate("OrderAccessDenied"));
 
             if (order.Status != OrderStatus.New)
                 throw new InvalidOperationException(_translation.Translate("OrderItemsCannotUpdate"));
@@ -128,12 +153,15 @@ namespace OrderSystem.Infrastructure.Services
             return order.ToDto();
         }
 
-        public async Task CancelOrderAsync(int id)
+        public async Task CancelOrderAsync(int id, int userId, bool isAdmin)
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
                 throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
-            
+
+            if (!isAdmin && order.Customer.UserId != userId)
+                throw new UnauthorizedAccessException(_translation.Translate("OrderAccessDenied"));
+
             if (!IsValidTransition(order.Status, OrderStatus.Cancelled))
                 throw new InvalidOperationException(_translation.Translate("OrderCancelInvalid", order.Status));
             

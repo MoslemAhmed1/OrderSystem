@@ -6,6 +6,7 @@ namespace OrderSystem.Application.Interfaces.Repositories
     {
         Task<Order?> GetByIdAsync(int id);
         Task<List<Order>> GetAllAsync();
+        Task<List<Order>> GetAllByCustomerIdAsync(int customerId);
         Task AddAsync(Order order);
         void Update(Order order);
         void Delete(Order order);

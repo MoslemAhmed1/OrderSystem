@@ -1,4 +1,4 @@
-﻿using OrderSystem.Application.DTOs.Auth;
+using OrderSystem.Application.DTOs.Auth;
 using OrderSystem.ViewModels.Auth;
 
 namespace OrderSystem.Mappings
@@ -11,7 +11,9 @@ namespace OrderSystem.Mappings
             {
                 Username = vm.Username,
                 Email = vm.Email,
-                Password = vm.Password
+                Password = vm.Password,
+                FirstName = vm.FirstName,
+                LastName = vm.LastName
             };
         }
 
