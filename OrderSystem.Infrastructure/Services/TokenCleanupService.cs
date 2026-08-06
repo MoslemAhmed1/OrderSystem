@@ -7,10 +7,6 @@ using OrderSystem.Application.Interfaces.Repositories;
 
 namespace OrderSystem.Infrastructure.Services
 {
-    /// <summary>
-    /// A background service that periodically purges expired and revoked refresh tokens
-    /// from the database to prevent unbounded table growth.
-    /// </summary>
     public class TokenCleanupService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
@@ -51,8 +47,6 @@ namespace OrderSystem.Infrastructure.Services
 
         private async Task RunCleanupAsync()
         {
-            // BackgroundService has singleton lifetime, but DbContext is scoped.
-            // Always create a fresh scope to resolve the repository correctly.
             using var scope = _scopeFactory.CreateScope();
             var repo = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
 

@@ -1,7 +1,7 @@
 ﻿using OrderSystem.Application.DTOs.Customers;
 using OrderSystem.Domain.Entities;
 
-namespace OrderSystem.Application.Mappings.Customers
+namespace OrderSystem.Application.Mappings
 {
     public static class CustomerMappings
     {

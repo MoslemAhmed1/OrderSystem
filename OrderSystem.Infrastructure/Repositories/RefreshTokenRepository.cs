@@ -50,7 +50,6 @@ namespace OrderSystem.Infrastructure.Repositories
                 token.RevokedAt = DateTime.UtcNow;
             }
 
-            // Entities are already tracked by EF; no explicit UpdateRange needed
             return tokens.Count;
         }
 
@@ -58,7 +57,7 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             var now = DateTime.UtcNow;
             return await _orderContext.RefreshTokens
-                .Where(rt => rt.ExpiresAt < now || rt.RevokedAt != null)
+                .Where(rt => !rt.IsActive)
                 .ExecuteDeleteAsync();
         }
     }

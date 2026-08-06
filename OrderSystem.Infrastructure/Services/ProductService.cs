@@ -1,7 +1,7 @@
 using OrderSystem.Application.DTOs.Products;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
-using OrderSystem.Application.Mappings.Products;
+using OrderSystem.Application.Mappings;
 using OrderSystem.Domain;
 
 namespace OrderSystem.Infrastructure.Services
@@ -39,6 +39,7 @@ namespace OrderSystem.Infrastructure.Services
 
             var response = product.ToDto();
             await _cache.SetAsync(cacheKey, response);
+
             return response;
         }
 
@@ -53,6 +54,7 @@ namespace OrderSystem.Infrastructure.Services
             var response = products.Select(product => product.ToDto()).ToList();
 
             await _cache.SetAsync(cacheKey, response);
+
             return response;
         }
 

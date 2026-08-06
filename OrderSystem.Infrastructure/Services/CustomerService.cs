@@ -1,7 +1,7 @@
 using OrderSystem.Application.DTOs.Customers;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
-using OrderSystem.Application.Mappings.Customers;
+using OrderSystem.Application.Mappings;
 using OrderSystem.Domain;
 
 namespace OrderSystem.Infrastructure.Services
@@ -69,8 +69,9 @@ namespace OrderSystem.Infrastructure.Services
             if (await _customerRepository.IsUsedInOrdersAsync(id))
                 return DeleteResult.HasExistingOrders;
 
-            await _customerRepository.DeleteAsync(id); // ASK: why no update here ? like product service
+            await _customerRepository.DeleteAsync(id);
             await _uow.CommitAsync();
+
             return DeleteResult.Success;
         }
     }

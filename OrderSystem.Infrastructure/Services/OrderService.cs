@@ -2,7 +2,7 @@ using OrderSystem.Application.Discount;
 using OrderSystem.Application.DTOs.Orders;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
-using OrderSystem.Application.Mappings.Orders;
+using OrderSystem.Application.Mappings;
 using OrderSystem.Domain.Entities;
 using OrderSystem.Domain.Enums;
 
@@ -154,10 +154,7 @@ namespace OrderSystem.Infrastructure.Services
             if (order is null)
                 throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
-            // Only restock if the order was NOT already cancelled.
-            // Cancelled orders had their stock returned in CancelOrderAsync,
-            // so restocking again here would incorrectly double the quantity.
-            List<int> affectedProductIds = [];
+            var affectedProductIds = new List<int>();
             if (order.Status == OrderStatus.New || order.Status == OrderStatus.Paid)
                 affectedProductIds = await RestockItems(order.Items);
 

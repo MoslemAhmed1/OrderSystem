@@ -1,7 +1,7 @@
 ﻿using OrderSystem.Application.DTOs.Products;
 using OrderSystem.Domain.Entities;
 
-namespace OrderSystem.Application.Mappings.Products
+namespace OrderSystem.Application.Mappings
 {
     public static class ProductMappings
     {
