@@ -15,22 +15,33 @@ namespace OrderSystem.Infrastructure.Services
         private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _uow;
         private readonly IDiscountPolicy _discountPolicy;
+        private readonly ITranslationService _translation;
+        private readonly ICacheService _cache;
 
-        public OrderService(IOrderRepository orderRepository, ICustomerRepository customerRepository, IProductRepository productRepository, IUnitOfWork uow, IDiscountPolicy discountPolicy)
+        public OrderService(
+            IOrderRepository orderRepository,
+            ICustomerRepository customerRepository,
+            IProductRepository productRepository,
+            IUnitOfWork uow,
+            IDiscountPolicy discountPolicy,
+            ITranslationService translation,
+            ICacheService cache)
         {
             _orderRepository = orderRepository;
             _customerRepository = customerRepository;
             _productRepository = productRepository;
             _uow = uow;
             _discountPolicy = discountPolicy;
+            _translation = translation;
+            _cache = cache;
         }
         
         public async Task<OrderResponse> GetByIdAsync(int id)
         {
             var order = await _orderRepository.GetByIdAsync(id);
 
-            if(order is null)
-                throw new KeyNotFoundException($"Order {id} not found.");
+            if (order is null)
+                throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
             return order.ToDto();
         }
@@ -44,11 +55,14 @@ namespace OrderSystem.Infrastructure.Services
         
         public async Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request)
         {
+            if (request.Items is null || request.Items.Count == 0)
+                throw new ArgumentException(_translation.Translate("OrderItemsEmpty"));
+
             var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
             if (customer is null)
-                throw new KeyNotFoundException($"Customer {request.CustomerId} not found.");
+                throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", request.CustomerId));
 
-            var items = await BuildItems(request.Items);
+            var (items, affectedProductIds) = await BuildItems(request.Items);
             var order = new Order
             {
                 CustomerId = customer.Id,
@@ -60,10 +74,12 @@ namespace OrderSystem.Infrastructure.Services
 
             await _orderRepository.AddAsync(order);
             await _uow.CommitAsync();
+
+            await InvalidateProductCacheAsync(affectedProductIds);
             
             var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
             if (savedOrder is null)
-                throw new InvalidOperationException($"Failed to retrieve order {order.Id} after creation.");
+                throw new InvalidOperationException(_translation.Translate("OrderCreationFailed", order.Id));
             
             return savedOrder.ToDto();
         }
@@ -72,12 +88,13 @@ namespace OrderSystem.Infrastructure.Services
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
-                throw new KeyNotFoundException($"Order {id} not found.");
+                throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
             if (!IsValidTransition(order.Status, newStatus))
-                throw new InvalidOperationException($"Cannot transition order from {order.Status} to {newStatus}.");
+                throw new InvalidOperationException(_translation.Translate("OrderStatusTransitionInvalid", order.Status, newStatus));
 
             order.Status = newStatus;
+            _orderRepository.Update(order); // ASK: inconsistency between services in explicit update
             await _uow.CommitAsync();
 
             return order.ToDto();
@@ -85,23 +102,30 @@ namespace OrderSystem.Infrastructure.Services
 
         public async Task<OrderResponse> UpdateItemsAsync(int id, List<CreateOrderItemRequest> newItems)
         {
+            if (newItems is null || newItems.Count == 0)
+                throw new ArgumentException(_translation.Translate("OrderItemsEmpty"));
+
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
-                throw new KeyNotFoundException($"Order {id} not found.");
+                throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
             if (order.Status != OrderStatus.New)
-                throw new InvalidOperationException("Only orders with status 'New' can have their items updated.");
+                throw new InvalidOperationException(_translation.Translate("OrderItemsCannotUpdate"));
 
-            await RestockItems(order.Items);
+            var oldProductIds = await RestockItems(order.Items);
 
-            var items = await BuildItems(newItems);
+            var (items, newProductIds) = await BuildItems(newItems);
             order.Items.Clear();
             foreach (var item in items)
                 order.Items.Add(item);
 
             order.Total = CalculateTotal(items, order.Customer.CustomerType);
 
+            _orderRepository.Update(order); // ASK: inconsistency between services in explicit update
             await _uow.CommitAsync();
+
+            var allAffectedIds = oldProductIds.Union(newProductIds).ToList();
+            await InvalidateProductCacheAsync(allAffectedIds);
 
             return order.ToDto();
         }
@@ -110,30 +134,40 @@ namespace OrderSystem.Infrastructure.Services
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
-                throw new KeyNotFoundException($"Order {id} not found.");
+                throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
             
             if (!IsValidTransition(order.Status, OrderStatus.Cancelled))
-                throw new InvalidOperationException($"Cannot cancel an order with status '{order.Status}'.");
+                throw new InvalidOperationException(_translation.Translate("OrderCancelInvalid", order.Status));
             
             order.Status = OrderStatus.Cancelled;
-            await RestockItems(order.Items);
+            var affectedProductIds = await RestockItems(order.Items);
 
+            _orderRepository.Update(order); // ASK: inconsistency between services in explicit update
             await _uow.CommitAsync();
+
+            await InvalidateProductCacheAsync(affectedProductIds);
         }
 
         public async Task DeleteAsync(int id)
         {
             var order = await _orderRepository.GetByIdAsync(id);
             if (order is null)
-                throw new KeyNotFoundException($"Order {id} not found.");
+                throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
-            await RestockItems(order.Items);
+            // Only restock if the order was NOT already cancelled.
+            // Cancelled orders had their stock returned in CancelOrderAsync,
+            // so restocking again here would incorrectly double the quantity.
+            List<int> affectedProductIds = [];
+            if (order.Status != OrderStatus.Cancelled)
+                affectedProductIds = await RestockItems(order.Items);
 
-            await _orderRepository.DeleteAsync(id);
+            _orderRepository.Delete(order);
             await _uow.CommitAsync();
+
+            await InvalidateProductCacheAsync(affectedProductIds);
         }
 
-        private async Task<List<OrderItem>> BuildItems(List<CreateOrderItemRequest> items)
+        private async Task<(List<OrderItem> Items, List<int> AffectedProductIds)> BuildItems(List<CreateOrderItemRequest> items)
         {
             var orderItems = new List<OrderItem>();
             var productIds = items.Select(i => i.ProductId).Distinct().ToList();
@@ -143,10 +177,10 @@ namespace OrderSystem.Infrastructure.Services
             {
                 var product = products.FirstOrDefault(p => p.Id == item.ProductId);
                 if (product is null)
-                    throw new KeyNotFoundException($"Product {item.ProductId} not found.");
+                    throw new KeyNotFoundException(_translation.Translate("ProductNotFound", item.ProductId));
                 
-                if(product.StockQuantity < item.Qty)
-                    throw new InvalidOperationException($"Insufficient stock for product {product.Name}. Requested: {item.Qty}, Available: {product.StockQuantity}.");
+                if (product.StockQuantity < item.Qty)
+                    throw new InvalidOperationException(_translation.Translate("InsufficientStock", product.Name, item.Qty, product.StockQuantity));
 
                 product.StockQuantity -= item.Qty;
 
@@ -159,10 +193,10 @@ namespace OrderSystem.Infrastructure.Services
                 orderItems.Add(orderItem);
             }
             
-            return orderItems;
+            return (orderItems, productIds);
         }
 
-        private async Task RestockItems(IEnumerable<OrderItem> items)
+        private async Task<List<int>> RestockItems(IEnumerable<OrderItem> items)
         {
             var productIds = items.Select(i => i.ProductId).Distinct().ToList();
             var products = await _productRepository.GetByIdsAsync(productIds);
@@ -173,6 +207,16 @@ namespace OrderSystem.Infrastructure.Services
                 if (product is not null)
                     product.StockQuantity += item.Qty;
             }
+
+            return productIds;
+        }
+
+        private async Task InvalidateProductCacheAsync(IEnumerable<int> productIds)
+        {
+            foreach (var id in productIds)
+                await _cache.RemoveAsync($"product_{id}");
+
+            await _cache.RemoveAsync("products_all");
         }
 
         private decimal CalculateTotal(List<OrderItem> items, CustomerType customerType)

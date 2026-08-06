@@ -12,24 +12,26 @@ namespace OrderSystem.Infrastructure.Services
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUnitOfWork _uow;
         private readonly ITokenService _tokenService;
+        private readonly ITranslationService _translation;
         private readonly PasswordHasher<User> _passwordHasher = new PasswordHasher<User>();
 
-        public AuthService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository, IUnitOfWork uow, ITokenService tokenService)
+        public AuthService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository, IUnitOfWork uow, ITokenService tokenService, ITranslationService translation)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _uow = uow;
             _tokenService = tokenService;
+            _translation = translation;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
         {
             // Check for existing username/email
             if (await _userRepository.UsernameExistsAsync(request.Username))
-                throw new InvalidOperationException("Username already exists.");
+                throw new InvalidOperationException(_translation.Translate("UsernameExists"));
 
             if (await _userRepository.EmailExistsAsync(request.Email))
-                throw new InvalidOperationException("Email already exists.");
+                throw new InvalidOperationException(_translation.Translate("EmailExists"));
 
             // Create new user
             var user = new User
@@ -55,12 +57,19 @@ namespace OrderSystem.Infrastructure.Services
             // Find user
             var user = await _userRepository.GetByUsernameAsync(request.Username);
             if (user is null)
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                throw new UnauthorizedAccessException(_translation.Translate("InvalidCredentials"));
 
             // Verify password
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
             if (result == PasswordVerificationResult.Failed)
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                throw new UnauthorizedAccessException(_translation.Translate("InvalidCredentials"));
+
+            // Rehash if the algorithm has been upgraded
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+                _userRepository.Update(user);
+            }
 
             var response = await IssueTokensAsync(user, request.DeviceInfo);
             await _uow.CommitAsync();
@@ -73,7 +82,7 @@ namespace OrderSystem.Infrastructure.Services
             var hashedToken = _tokenService.HashToken(request.RefreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
             if (storedToken is null || !storedToken.IsActive)
-                throw new UnauthorizedAccessException("Invalid or expired refresh token.");
+                throw new UnauthorizedAccessException(_translation.Translate("InvalidRefreshToken"));
 
             // Revoke old refresh token
             storedToken.RevokedAt = DateTime.UtcNow;
@@ -89,7 +98,7 @@ namespace OrderSystem.Infrastructure.Services
             var hashedToken = _tokenService.HashToken(refreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
             if (storedToken is null || !storedToken.IsActive)
-                throw new InvalidOperationException("Token not found or already inactive.");
+                throw new InvalidOperationException(_translation.Translate("TokenInactive"));
 
             storedToken.RevokedAt = DateTime.UtcNow;
             await _uow.CommitAsync();

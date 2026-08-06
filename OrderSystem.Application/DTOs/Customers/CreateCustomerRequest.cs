@@ -1,4 +1,4 @@
-﻿using OrderSystem.Domain.Enums;
+using OrderSystem.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace OrderSystem.Application.DTOs.Customers
@@ -13,7 +13,6 @@ namespace OrderSystem.Application.DTOs.Customers
         [StringLength(50)]
         public required string LastName { get; set; }
 
-        [Required]
         public CustomerType CustomerType { get; set; }
     }
 }

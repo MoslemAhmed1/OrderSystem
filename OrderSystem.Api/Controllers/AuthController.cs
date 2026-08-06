@@ -23,7 +23,8 @@ namespace OrderSystem.Controllers
         {
             var result = await _authService.RegisterAsync(request.ToDto());
 
-            return Ok(ApiResponse<AuthViewModel>.Success(result.ToViewModel(), "User registered successfully.", StatusCodes.Status201Created));
+            return StatusCode(StatusCodes.Status201Created,
+                ApiResponse<AuthViewModel>.Success(result.ToViewModel(), "User registered successfully.", StatusCodes.Status201Created));
         }
 
         [HttpPost("login")]

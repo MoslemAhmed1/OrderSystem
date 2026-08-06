@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using OrderSystem.Application.Auth;
+using OrderSystem.Application.Caching;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Infrastructure.Repositories;
 using OrderSystem.Common;
@@ -12,6 +12,7 @@ using OrderSystem.Infrastructure.Data;
 using OrderSystem.Application.Discount;
 using OrderSystem.Application.Interfaces.Services;
 using OrderSystem.Infrastructure.Services;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,9 +67,7 @@ builder.Services.AddDbContext<OrderContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("OrderSystemDb"));
 });
 
-
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
 
 // Repositories
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -78,6 +77,37 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Localization
+builder.Services.AddLocalization();
+var supportedCultures = new[] { "en", "ar" };
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture("en")
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
+builder.Services.AddSingleton<ITranslationService, TranslationService>();
+
+// Caching
+builder.Services.AddMemoryCache();
+builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection("Caching"));
+var cachingProvider = builder.Configuration.GetSection("Caching")["Provider"];
+if (cachingProvider == "InMemory")
+{
+    builder.Services.AddScoped<ICacheService, InMemoryCacheService>();
+}
+else if (cachingProvider == "Redis")
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = builder.Configuration.GetConnectionString("Redis");
+        options.InstanceName = "OrderSystem_";
+    });
+    builder.Services.AddScoped<ICacheService, RedisCacheService>();
+}
+else
+{
+    builder.Services.AddScoped<ICacheService, NullCacheService>();
+}
+
 // Services
 builder.Services.Configure<DiscountOptions>(builder.Configuration.GetSection("Discounts"));
 builder.Services.AddSingleton<IDiscountPolicy, DiscountPolicy>();
@@ -86,10 +116,11 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHostedService<TokenCleanupService>();
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
+app.UseExceptionHandler(_ => { });
 
 if (app.Environment.IsDevelopment())
 {
@@ -103,9 +134,12 @@ if (app.Environment.IsDevelopment())
 app.UseRequestTiming();
 app.UseRateLimiting();
 
+app.UseRequestLocalization(localizationOptions);
+
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

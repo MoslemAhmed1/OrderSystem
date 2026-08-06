@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="0" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ProductCreated" xml:space="preserve">
+    <value>تم إنشاء المنتج بنجاح.</value>
+  </data>
+  <data name="ProductUpdated" xml:space="preserve">
+    <value>تم تحديث المنتج بنجاح.</value>
+  </data>
+  <data name="ProductNotFound" xml:space="preserve">
+    <value>المنتج {0} غير موجود.</value>
+  </data>
+  <data name="ProductHasOrders" xml:space="preserve">
+    <value>لا يمكن حذف منتج مرتبط بطلبات حالية.</value>
+  </data>
+  <data name="CustomerNotFound" xml:space="preserve">
+    <value>العميل {0} غير موجود.</value>
+  </data>
+  <data name="CustomerHasOrders" xml:space="preserve">
+    <value>لا يمكن حذف عميل مرتبط بطلبات حالية.</value>
+  </data>
+  <data name="CustomerCreated" xml:space="preserve">
+    <value>تم إنشاء العميل بنجاح.</value>
+  </data>
+  <data name="CustomerUpdated" xml:space="preserve">
+    <value>تم تحديث العميل بنجاح.</value>
+  </data>
+  <data name="OrderNotFound" xml:space="preserve">
+    <value>الطلب {0} غير موجود.</value>
+  </data>
+  <data name="OrderCreationFailed" xml:space="preserve">
+    <value>فشل استرداد الطلب {0} بعد الإنشاء.</value>
+  </data>
+  <data name="OrderItemsEmpty" xml:space="preserve">
+    <value>يجب أن يحتوي الطلب على عنصر واحد على الأقل.</value>
+  </data>
+  <data name="OrderStatusTransitionInvalid" xml:space="preserve">
+    <value>لا يمكن تغيير حالة الطلب من {0} إلى {1}.</value>
+  </data>
+  <data name="OrderCancelInvalid" xml:space="preserve">
+    <value>لا يمكن إلغاء طلب بحالة '{0}'.</value>
+  </data>
+  <data name="OrderItemsCannotUpdate" xml:space="preserve">
+    <value>يمكن تعديل عناصر الطلبات ذات الحالة 'جديد' فقط.</value>
+  </data>
+  <data name="InsufficientStock" xml:space="preserve">
+    <value>المخزون غير كافٍ للمنتج {0}. المطلوب: {1}، المتاح: {2}.</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>نجاح</value>
+  </data>
+  <data name="ValidationFailed" xml:space="preserve">
+    <value>فشل التحقق من صحة البيانات.</value>
+  </data>
+  <data name="UnexpectedError" xml:space="preserve">
+    <value>حدث خطأ غير متوقع.</value>
+  </data>
+  <data name="UsernameExists" xml:space="preserve">
+    <value>اسم المستخدم موجود بالفعل.</value>
+  </data>
+  <data name="EmailExists" xml:space="preserve">
+    <value>البريد الإلكتروني موجود بالفعل.</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>اسم المستخدم أو كلمة المرور غير صحيحة.</value>
+  </data>
+  <data name="InvalidRefreshToken" xml:space="preserve">
+    <value>رمز التحديث غير صالح أو منتهي الصلاحية.</value>
+  </data>
+  <data name="TokenInactive" xml:space="preserve">
+    <value>الرمز غير موجود أو غير نشط بالفعل.</value>
+  </data>
+</root>
+

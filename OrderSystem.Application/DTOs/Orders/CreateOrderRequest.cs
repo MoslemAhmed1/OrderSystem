@@ -1,14 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace OrderSystem.Application.DTOs.Orders
 {
     public class CreateOrderRequest
     {
-        [Required]
         public int CustomerId { get; set; }
 
-        [Required]
-        [MinLength(1, ErrorMessage = "Order must contain at least one item.")]
+        // Minimum 1 item is enforced in the service layer (MinLength does not work on List<T>)
         public List<CreateOrderItemRequest> Items { get; set; } = new();
     }
 }

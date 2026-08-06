@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Domain.Entities;
 using OrderSystem.Infrastructure.Data;
@@ -38,6 +38,11 @@ namespace OrderSystem.Infrastructure.Repositories
         public void Update(Order order)
         {
             _orderContext.Orders.Update(order);
+        }
+
+        public void Delete(Order order)
+        {
+            _orderContext.Orders.Remove(order);
         }
 
         public async Task<bool> DeleteAsync(int id)

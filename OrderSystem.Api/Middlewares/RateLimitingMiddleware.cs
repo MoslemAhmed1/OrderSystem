@@ -14,7 +14,7 @@ namespace OrderSystem.Middlewares
         public async Task InvokeAsync(HttpContext context)
         {
             Interlocked.Increment(ref _counter);
-            int secondsDifference = DateTime.UtcNow.Subtract(_lastRequestDate).Seconds;
+            double secondsDifference = DateTime.UtcNow.Subtract(_lastRequestDate).TotalSeconds;
             _lastRequestDate = DateTime.UtcNow;
 
             if (secondsDifference > 10)

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Domain.Entities;
 using OrderSystem.Infrastructure.Data;
@@ -39,6 +39,11 @@ namespace OrderSystem.Infrastructure.Repositories
                 return true;
             }
             return false;
+        }
+
+        public async Task<bool> IsUsedInOrdersAsync(int id)
+        {
+            return await _orderContext.Orders.AnyAsync(o => o.CustomerId == id);
         }
     }
 }

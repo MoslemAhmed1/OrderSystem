@@ -1,4 +1,4 @@
-﻿using OrderSystem.Domain.Entities;
+using OrderSystem.Domain.Entities;
 
 namespace OrderSystem.Application.Interfaces.Repositories
 {
@@ -10,5 +10,6 @@ namespace OrderSystem.Application.Interfaces.Repositories
         Task AddAsync(Product product);
         void Update(Product product);
         Task<bool> DeleteAsync(int id);
+        Task<bool> IsUsedInOrdersAsync(int id);
     }
 }

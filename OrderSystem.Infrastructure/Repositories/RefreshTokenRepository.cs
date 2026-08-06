@@ -34,7 +34,7 @@ namespace OrderSystem.Infrastructure.Repositories
             await _orderContext.RefreshTokens.AddAsync(token);
         }
 
-        public async Task UpdateAsync(RefreshToken token)
+        public void Update(RefreshToken token)
         {
             _orderContext.RefreshTokens.Update(token);
         }
@@ -50,8 +50,16 @@ namespace OrderSystem.Infrastructure.Repositories
                 token.RevokedAt = DateTime.UtcNow;
             }
 
-            _orderContext.RefreshTokens.UpdateRange(tokens);
+            // Entities are already tracked by EF; no explicit UpdateRange needed
             return tokens.Count;
+        }
+
+        public async Task<int> DeleteExpiredAndRevokedAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _orderContext.RefreshTokens
+                .Where(rt => rt.ExpiresAt < now || rt.RevokedAt != null)
+                .ExecuteDeleteAsync();
         }
     }
 }

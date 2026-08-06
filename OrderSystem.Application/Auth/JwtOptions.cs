@@ -7,5 +7,6 @@ namespace OrderSystem.Application.Auth
         public string Audience { get; set; } = string.Empty;
         public int AccessTokenExpirationMinutes { get; set; }
         public int RefreshTokenExpirationDays { get; set; }
+        public int TokenCleanupIntervalHours { get; set; } = 24;
     }
 }

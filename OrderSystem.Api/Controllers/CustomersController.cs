@@ -14,10 +14,12 @@ namespace OrderSystem.Controllers
     public class CustomersController : ControllerBase
     {
         private readonly ICustomerService _customerService;
+        private readonly ITranslationService _translationService;
 
-        public CustomersController(ICustomerService customerService)
+        public CustomersController(ICustomerService customerService, ITranslationService translationService)
         {
             _customerService = customerService;
+            _translationService = translationService;
         }
 
         [HttpGet("{id}")]
@@ -40,14 +42,15 @@ namespace OrderSystem.Controllers
         public async Task<IActionResult> Create(CreateCustomerViewModel request)
         {
             var customer = await _customerService.CreateAsync(request.ToDto());
-            return CreatedAtAction(nameof(GetById), new { id = customer.Id }, ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(), "Customer created successfully.", StatusCodes.Status201Created));
+            return CreatedAtAction(nameof(GetById), new { id = customer.Id }, ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(), _translationService.Translate("CustomerCreated"), StatusCodes.Status201Created));
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, UpdateCustomerViewModel request)
         {
             var customer = await _customerService.UpdateAsync(id, request.ToDto());
-            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(), "Customer updated successfully."));
+            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(), _translationService.Translate("CustomerUpdated")));
         }
 
         [HttpDelete("{id}")]
@@ -57,10 +60,10 @@ namespace OrderSystem.Controllers
             var result = await _customerService.DeleteAsync(id);
             return result switch
             {
-                DeleteResult.NotFound => NotFound(ApiResponse.Fail("Customer not found.", 404)),
-                DeleteResult.HasExistingOrders => Conflict(ApiResponse.Fail("Cannot delete a customer that has existing orders.", 409)),
+                DeleteResult.NotFound => NotFound(ApiResponse.Fail(_translationService.Translate("CustomerNotFound", id), StatusCodes.Status404NotFound)),
+                DeleteResult.HasExistingOrders => Conflict(ApiResponse.Fail(_translationService.Translate("CustomerHasOrders"), StatusCodes.Status409Conflict)),
                 DeleteResult.Success => NoContent(),
-                _ => StatusCode(500, ApiResponse.Fail("Unexpected error.", 500))
+                _ => StatusCode(500, ApiResponse.Fail(_translationService.Translate("UnexpectedError"), StatusCodes.Status500InternalServerError))
             };
         }
     }

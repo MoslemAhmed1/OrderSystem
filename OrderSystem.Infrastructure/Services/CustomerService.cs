@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using OrderSystem.Application.DTOs.Customers;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
@@ -11,19 +10,21 @@ namespace OrderSystem.Infrastructure.Services
     {
         private readonly ICustomerRepository _customerRepository;
         private readonly IUnitOfWork _uow;
+        private readonly ITranslationService _translation;
 
-        public CustomerService(ICustomerRepository customerRepository, IUnitOfWork uow)
+        public CustomerService(ICustomerRepository customerRepository, IUnitOfWork uow, ITranslationService translation)
         {
             _customerRepository = customerRepository;
             _uow = uow;
+            _translation = translation;
         }
 
         public async Task<CustomerResponse> GetByIdAsync(int id)
         {
             var customer = await _customerRepository.GetByIdAsync(id);
             
-            if(customer is null)
-                throw new KeyNotFoundException($"Customer {id} not found.");
+            if (customer is null)
+                throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", id));
 
             return customer.ToDto();
         }
@@ -49,7 +50,7 @@ namespace OrderSystem.Infrastructure.Services
         {
             var customer = await _customerRepository.GetByIdAsync(id);
             if (customer is null)
-                throw new KeyNotFoundException($"Customer {id} not found.");
+                throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", id));
 
             customer.UpdateFrom(request);
 
@@ -61,20 +62,16 @@ namespace OrderSystem.Infrastructure.Services
 
         public async Task<DeleteResult> DeleteAsync(int id)
         {
-
-            var deleted = await _customerRepository.DeleteAsync(id);
-            if (!deleted)
+            var customer = await _customerRepository.GetByIdAsync(id);
+            if (customer is null)
                 return DeleteResult.NotFound;
 
-            try
-            {
-                await _uow.CommitAsync();
-                return DeleteResult.Success;
-            }
-            catch (DbUpdateException)
-            {
+            if (await _customerRepository.IsUsedInOrdersAsync(id))
                 return DeleteResult.HasExistingOrders;
-            }
+
+            await _customerRepository.DeleteAsync(id); // ASK: why no update here ? like product service
+            await _uow.CommitAsync();
+            return DeleteResult.Success;
         }
     }
 }

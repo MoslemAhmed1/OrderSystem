@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using OrderSystem.Application.DTOs.Products;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
@@ -11,28 +10,50 @@ namespace OrderSystem.Infrastructure.Services
     {
         private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _uow;
+        private readonly ICacheService _cache;
+        private readonly ITranslationService _translation;
 
-        public ProductService(IProductRepository productRepository, IUnitOfWork uow)
+        public ProductService(
+            IProductRepository productRepository, 
+            IUnitOfWork uow, 
+            ICacheService cache, 
+            ITranslationService translation)
         {
             _productRepository = productRepository;
             _uow = uow;
+            _cache = cache;
+            _translation = translation;
         }
 
         public async Task<ProductResponse> GetByIdAsync(int id)
         {
+            var cacheKey = $"product_{id}";
+            var cachedProduct = await _cache.GetAsync<ProductResponse>(cacheKey);
+            if (cachedProduct is not null)
+                return cachedProduct;
+
             var product = await _productRepository.GetByIdAsync(id);
 
-            if(product is null)
-                throw new KeyNotFoundException($"Product {id} not found.");
+            if (product is null)
+                throw new KeyNotFoundException(_translation.Translate("ProductNotFound", id));
 
-            return product.ToDto();
+            var response = product.ToDto();
+            await _cache.SetAsync(cacheKey, response);
+            return response;
         }
 
         public async Task<List<ProductResponse>> GetAllAsync()
         {
-            var products = await _productRepository.GetAllAsync();
+            var cacheKey = "products_all";
+            var cachedProducts = await _cache.GetAsync<List<ProductResponse>>(cacheKey);
+            if (cachedProducts is not null)
+                return cachedProducts;
 
-            return products.Select(product => product.ToDto()).ToList();
+            var products = await _productRepository.GetAllAsync();
+            var response = products.Select(product => product.ToDto()).ToList();
+
+            await _cache.SetAsync(cacheKey, response);
+            return response;
         }
 
         public async Task<ProductResponse> CreateAsync(CreateProductRequest request)
@@ -42,38 +63,45 @@ namespace OrderSystem.Infrastructure.Services
             await _productRepository.AddAsync(product);
             await _uow.CommitAsync();
 
-            return product.ToDto();
+            var response = product.ToDto();
+            await _cache.RemoveAsync("products_all");
+
+            return response;
         }
 
         public async Task<ProductResponse> UpdateAsync(int id, UpdateProductRequest request)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product is null)
-                throw new KeyNotFoundException($"Product {id} not found.");
+                throw new KeyNotFoundException(_translation.Translate("ProductNotFound", id));
 
             product.UpdateFrom(request);
 
             _productRepository.Update(product);
             await _uow.CommitAsync();
 
-            return product.ToDto();
+            var response = product.ToDto();
+            await _cache.RemoveAsync($"product_{id}");
+            await _cache.RemoveAsync("products_all");
+
+            return response;
         }
 
         public async Task<DeleteResult> DeleteAsync(int id)
         {
-            var deleted = await _productRepository.DeleteAsync(id);
-            if (!deleted)
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product is null)
                 return DeleteResult.NotFound;
 
-            try
-            {
-                await _uow.CommitAsync();
-                return DeleteResult.Success;
-            }
-            catch (DbUpdateException)
-            {
+            if (await _productRepository.IsUsedInOrdersAsync(id))
                 return DeleteResult.HasExistingOrders;
-            }
+
+            await _productRepository.DeleteAsync(id);
+            await _uow.CommitAsync();
+
+            await _cache.RemoveAsync($"product_{id}");
+            await _cache.RemoveAsync("products_all");
+            return DeleteResult.Success;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using OrderSystem.Domain.Entities;
+using OrderSystem.Domain.Entities;
 
 namespace OrderSystem.Application.Interfaces.Repositories
 {
@@ -8,6 +8,7 @@ namespace OrderSystem.Application.Interfaces.Repositories
         Task<List<Order>> GetAllAsync();
         Task AddAsync(Order order);
         void Update(Order order);
+        void Delete(Order order);
         Task<bool> DeleteAsync(int id);
     }
 }
