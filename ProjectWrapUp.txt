@@ -1,0 +1,80 @@
+Project WrapUp:
+
+General:
+	- Make sure the architecture, the folder structures are all consistent and correct.
+	- Make sure class default initializations are correct (if needed)
+	- Make Sure that there's a VM<->DTO<->Entity mapping for anything that's received/sent through the api controllers
+	- Where should data annotations be placed ? Entities/DTOs/VMs ? which of them ? or all of them ?
+	- Make sure any unreferenced functions are either removed if they're redundant, or used if they're useful
+	- There's inconsistencies when using repository.Update in the services, some use it and some don't, are they redundant since EF tracks and uow commits ?
+	- Design Conflict: I have a design question, now shouldn't the app flow be like:
+		- user registers
+		- customer with userId automatically created
+		- any Methods on order controller only affects those of the user
+		- ... etc
+	  I'm not sure, so i want you to tell me what's the right design for this project, and whether there are any needed changes to be made
+
+Domain:
+	Entities:
+		- Inconsistent Data Annotations: some entities have data annotations and some not, what's the correct approach ?
+		- Design Conflict: should we remove Customer entity and keep only user with user role ? or do we reference user in customer and a customer is automatically created when a user registers ? what's the correct approach ?
+		- RefreshToken: 
+			- Why store TokenHash and not token ? what's the standard approach ?
+			- Is RevokedAt a correct design approach ? what's the standard for refresh tokens ?
+			- What's the purpose of ReplacedByTokenId ? should it be removed ?
+
+Application:
+	DTOs:
+		Auth:
+			- Should AuthResponse be returning both Access & Refresh Tokens ? what's the standard
+			- Why is there a RefreshTokenRequest ?
+		Orders:
+			- Shouldn't there be an UpdateOrderItemRequest instead of using CreateOrderItemRequest to avoid changing anything else in the order info ?
+	Interfaces:
+		Repositories:
+			- can "void Update(Customer customer)" be made asynchronous or it isn't applicable ? same for Order & Product repositories
+			- why is there 2 delete functions in IOrderRepository ? should we remove one of them ?
+			- there are 2 unused functions in IRefreshTokenRepository, should we remove them or is there a use for them in this project ?
+			- can we merge UsernameExistsAsync and EmailExistsAsync instead of querying the database twice in IUserRepository ?
+			- What's the purpose of ValidateToken in ITokenService ? should we use or remove it ?
+		Mappings:
+			- why there's no Dto -> Entity in OrderMappings ?
+
+Infrastructure:
+	Repositories:
+		- GetActiveTokensByUserIdAsync, Update, RevokeAllForUserAsync in RefreshTokenRepository aren't referenced anywhere, should i delete them ?
+		- GetByIdAsync & GetByEmailAsync in UserRepository aren't referenced anywhere, should i delete them ?
+		- DeleteAsync in OrderRepository isn't referenced anywhere, should i delete it ?
+	Services:
+		AuthService:
+			- In RegisterAsync, create a repository function which searches for email & username at the same time instead of querying database twice ?
+			- In LoginAsync, why rehash password ? what's PasswordVerificationResult.SuccessRehashNeeded ?
+			- What's the purpose of RefreshTokenAsync ? when is it used ? do we need it in the first place ?
+		CustomerService:
+			- In UpdateAsync, doesn't EF track the customer from UpdateFrom(), why do we still call Update() from repository before CommitAsync() ? is it redundant ?
+		CachingServices(InMemory, Redis, Null):
+			- Are these caching services implemented correctly ? I only tested the InMemoryCache but not Redis nor Null
+		ProductService:
+			- what's the difference between products_{id} and products_all in caching ?
+			- do we set DTOs in the cache or entites ? what's the standard approach ?
+		TokenCleanupService:
+			- why all this workaround in RunCleanupAsync when we can inject IRefreshTokenRepository and use it directly ?
+			- what's the purpose of the delay in ExecuteAsync ?
+		TokenService:
+			- shouldn't ValidateToken be configured as i did in program.cs ? isn't it redundant ?
+			- is the method for GenerateRefreshToken correct ? is this the standard approach ?
+		TranslationService:
+			- is this a standard approach for translation/localizer service ?
+		OrderService:
+			- There's inconsistencies when using repository.Update in the services, some use it and some don't
+Api:
+	Controllers:
+		AuthController:
+			- is RefreshToken endpoint needed ? what's its use ? should it be authorized ?
+	Middlewares:
+		RateLimitingMiddleware:
+			- is the implementation correct ?
+			- what's the purpose of interlocked ?
+	ViewModels:
+		- shouldn't the viewmodels be different from Dtos ? like we show custom stuff + choose not to show some data from the Dtos ? since there are some viewmodels which are the exact same as their Dtos
+	
