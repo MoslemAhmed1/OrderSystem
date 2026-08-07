@@ -10,7 +10,7 @@ namespace OrderSystem.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class CustomersController : ControllerBase
     {
         private readonly ICustomerService _customerService;
@@ -38,7 +38,6 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(CreateCustomerViewModel request)
         {
             var customer = await _customerService.CreateAsync(request.ToDto());
@@ -46,7 +45,6 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, UpdateCustomerViewModel request)
         {
             var customer = await _customerService.UpdateAsync(id, request.ToDto());
@@ -54,7 +52,6 @@ namespace OrderSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _customerService.DeleteAsync(id);

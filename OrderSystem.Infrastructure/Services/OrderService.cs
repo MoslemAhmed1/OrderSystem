@@ -254,7 +254,7 @@ namespace OrderSystem.Infrastructure.Services
             {
                 (OrderStatus.New, OrderStatus.Paid) => true,
                 (OrderStatus.Paid, OrderStatus.Shipped) => true,
-                (OrderStatus.Paid, OrderStatus.Cancelled) => true,
+                //(OrderStatus.Paid, OrderStatus.Cancelled) => true,
                 (OrderStatus.New, OrderStatus.Cancelled) => true,
                 _ => false
             };

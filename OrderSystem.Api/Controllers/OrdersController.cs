@@ -48,7 +48,6 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPatch("{id}/status")]
-        [Authorize]
         public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusViewModel request)
         {
             var order = await _orderService.UpdateStatusAsync(id, request.OrderStatus, GetUserId(), IsAdmin());
@@ -56,7 +55,6 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPatch("{id}/items")]
-        [Authorize]
         public async Task<IActionResult> UpdateItems(int id, List<CreateOrderItemViewModel> items)
         {
             var requestItems = items.Select(i => i.ToDto()).ToList();
@@ -65,7 +63,6 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPost("{id}/cancel")]
-        [Authorize]
         public async Task<IActionResult> CancelOrder(int id)
         {
             await _orderService.CancelOrderAsync(id, GetUserId(), IsAdmin());
