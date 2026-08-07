@@ -1,4 +1,4 @@
-﻿using OrderSystem.Application.DTOs.Customers;
+using OrderSystem.Application.DTOs.Customers;
 using OrderSystem.ViewModels.Customers;
 
 namespace OrderSystem.Mappings
@@ -22,6 +22,15 @@ namespace OrderSystem.Mappings
                 FirstName = vm.FirstName,
                 LastName = vm.LastName,
                 CustomerType = vm.CustomerType
+            };
+        }
+
+        public static UpdateCustomerProfileRequest ToDto(this UpdateCustomerProfileViewModel vm)
+        {
+            return new UpdateCustomerProfileRequest
+            {
+                FirstName = vm.FirstName,
+                LastName = vm.LastName
             };
         }
 

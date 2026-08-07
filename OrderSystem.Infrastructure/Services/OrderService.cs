@@ -162,7 +162,7 @@ namespace OrderSystem.Infrastructure.Services
             if (!isAdmin && order.Customer.UserId != userId)
                 throw new UnauthorizedAccessException(_translation.Translate("OrderAccessDenied"));
 
-            if (!IsValidTransition(order.Status, OrderStatus.Cancelled))
+            if (order.Status != OrderStatus.New && order.Status != OrderStatus.Paid)
                 throw new InvalidOperationException(_translation.Translate("OrderCancelInvalid", order.Status));
             
             order.Status = OrderStatus.Cancelled;
@@ -179,14 +179,11 @@ namespace OrderSystem.Infrastructure.Services
             if (order is null)
                 throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
-            var affectedProductIds = new List<int>();
-            if (order.Status == OrderStatus.New || order.Status == OrderStatus.Paid)
-                affectedProductIds = await RestockItems(order.Items);
+            if (order.Status != OrderStatus.Cancelled)
+                throw new InvalidOperationException("Only cancelled orders can be soft deleted.");
 
-            _orderRepository.Delete(order);
+            order.IsDeleted = true;
             await _uow.CommitAsync();
-
-            await InvalidateProductCacheAsync(affectedProductIds);
         }
 
         private async Task<(List<OrderItem> Items, List<int> AffectedProductIds)> BuildItems(List<CreateOrderItemRequest> items)

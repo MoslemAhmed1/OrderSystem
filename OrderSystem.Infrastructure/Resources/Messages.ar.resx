@@ -127,5 +127,8 @@
   <data name="TokenInactive" xml:space="preserve">
     <value>الرمز غير موجود أو غير نشط بالفعل.</value>
   </data>
+  <data name="OrderAccessDenied" xml:space="preserve">
+    <value>تم رفض الوصول إلى هذا الطلب.</value>
+  </data>
 </root>
 

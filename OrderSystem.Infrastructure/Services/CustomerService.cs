@@ -59,6 +59,20 @@ namespace OrderSystem.Infrastructure.Services
             return customer.ToDto();
         }
 
+        public async Task<CustomerResponse> UpdateSelfAsync(int userId, UpdateCustomerProfileRequest request)
+        {
+            var customer = await _customerRepository.GetByUserIdAsync(userId);
+            if (customer is null)
+                throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", userId));
+
+            customer.FirstName = request.FirstName;
+            customer.LastName = request.LastName;
+
+            await _uow.CommitAsync();
+
+            return customer.ToDto();
+        }
+
         public async Task<DeleteResult> DeleteAsync(int id)
         {
             var customer = await _customerRepository.GetByIdAsync(id);

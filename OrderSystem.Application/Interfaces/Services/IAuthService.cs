@@ -7,6 +7,6 @@ namespace OrderSystem.Application.Interfaces.Services
         Task<AuthResponse> RegisterAsync(RegisterRequest request);
         Task<AuthResponse> LoginAsync(LoginRequest request);
         Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request);
-        Task RevokeTokenAsync(string refreshToken);
+        Task RevokeTokenAsync(string refreshToken, int userId);
     }
 }

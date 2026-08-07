@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics;
 using OrderSystem.Common;
 
 namespace OrderSystem.Middlewares
@@ -34,10 +34,10 @@ namespace OrderSystem.Middlewares
         {
             return exception switch
             {
-                InvalidOperationException => (StatusCodes.Status400BadRequest, exception.Message),
-                UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, exception.Message),
-                KeyNotFoundException => (StatusCodes.Status404NotFound, exception.Message),
-                ArgumentException => (StatusCodes.Status400BadRequest, exception.Message),
+                UnauthorizedAccessException e => ((e.Message.Contains("InvalidCredentials") || e.Message.Contains("InvalidRefreshToken")) ? StatusCodes.Status403Forbidden : StatusCodes.Status401Unauthorized, e.Message),
+                InvalidOperationException e => (StatusCodes.Status400BadRequest, e.Message),
+                KeyNotFoundException e => (StatusCodes.Status404NotFound, e.Message),
+                ArgumentException e => (StatusCodes.Status400BadRequest, e.Message),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
             };
         }

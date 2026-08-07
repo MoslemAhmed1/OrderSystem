@@ -33,12 +33,11 @@ namespace OrderSystem.Infrastructure.Services
             _translation = translation;
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+        public async Task<AuthResponse> RegisterAsync(RegisterRequest request) // TODO: should be transaction
         {
             var (usernameExists, emailExists) = await _userRepository.CheckUserExistsAsync(request.Username, request.Email);
             if (usernameExists)
                 throw new InvalidOperationException(_translation.Translate("UsernameExists"));
-
             if (emailExists)
                 throw new InvalidOperationException(_translation.Translate("EmailExists"));
 
@@ -50,7 +49,7 @@ namespace OrderSystem.Infrastructure.Services
             };
             user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
             await _userRepository.CreateAsync(user);
-            await _uow.CommitAsync(); 
+            await _uow.CommitAsync();
 
             var customer = new Customer
             {
@@ -60,9 +59,8 @@ namespace OrderSystem.Infrastructure.Services
                 UserId = user.Id
             };
             await _customerRepository.AddAsync(customer);
-            await _uow.CommitAsync(); // TODO: i think not needed
 
-            var response = await IssueTokensAsync(user, null);
+            var response = await IssueTokensAsync(user, request.DeviceInfo);
             await _uow.CommitAsync();
             
             return response;
@@ -81,7 +79,6 @@ namespace OrderSystem.Infrastructure.Services
             if (result == PasswordVerificationResult.SuccessRehashNeeded)
             {
                 user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-                _userRepository.Update(user);
             }
 
             var response = await IssueTokensAsync(user, request.DeviceInfo);
@@ -97,21 +94,21 @@ namespace OrderSystem.Infrastructure.Services
             if (storedToken is null || !storedToken.IsActive)
                 throw new UnauthorizedAccessException(_translation.Translate("InvalidRefreshToken"));
 
-            // Revoke old refresh token
             storedToken.RevokedAt = DateTime.UtcNow;
-
+            
             var response = await IssueTokensAsync(storedToken.User, storedToken.DeviceInfo);
             await _uow.CommitAsync();
 
             return response;
         }
 
-        public async Task RevokeTokenAsync(string refreshToken)
+        public async Task RevokeTokenAsync(string refreshToken, int userId)
         {
             var hashedToken = _tokenService.HashToken(refreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
-            if (storedToken is null || !storedToken.IsActive)
-                throw new InvalidOperationException(_translation.Translate("TokenInactive"));
+            
+            if (storedToken is null || !storedToken.IsActive || storedToken.UserId != userId)
+                return;
 
             storedToken.RevokedAt = DateTime.UtcNow;
             await _uow.CommitAsync();
@@ -119,6 +116,15 @@ namespace OrderSystem.Infrastructure.Services
 
         private async Task<AuthResponse> IssueTokensAsync(User user, string? deviceInfo)
         {
+            if (!string.IsNullOrEmpty(deviceInfo))
+            {
+                var activeToken = await _refreshTokenRepository.GetActiveTokenByUserAndDeviceAsync(user.Id, deviceInfo);
+                if (activeToken != null)
+                {
+                    activeToken.RevokedAt = DateTime.UtcNow;
+                }
+            }
+
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshTokenString = _tokenService.GenerateRefreshToken();
             

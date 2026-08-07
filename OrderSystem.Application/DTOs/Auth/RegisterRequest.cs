@@ -23,5 +23,7 @@ namespace OrderSystem.Application.DTOs.Auth
         [Required]
         [StringLength(50, MinimumLength = 1)]
         public required string LastName { get; set; }
+
+        public string? DeviceInfo { get; set; }
     }
 }

@@ -60,6 +60,7 @@ namespace OrderSystem.Infrastructure.Data
                 .HasMaxLength(20);
 
             modelBuilder.Entity<Order>().Property(o => o.Total).HasPrecision(18, 2);
+            modelBuilder.Entity<Order>().HasQueryFilter(o => !o.IsDeleted);
 
             // Order -> Customer: Many-One, Required
             modelBuilder.Entity<Order>()

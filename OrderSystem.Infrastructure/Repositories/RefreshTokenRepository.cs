@@ -21,12 +21,11 @@ namespace OrderSystem.Infrastructure.Repositories
                 .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
         }
 
-        public async Task<List<RefreshToken>> GetActiveTokensByUserIdAsync(int userId)
+        public async Task<RefreshToken?> GetActiveTokenByUserAndDeviceAsync(int userId, string deviceInfo)
         {
             var now = DateTime.UtcNow;
             return await _orderContext.RefreshTokens
-                .Where(rt => rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > now)
-                .ToListAsync();
+                .FirstOrDefaultAsync(rt => rt.UserId == userId && rt.DeviceInfo == deviceInfo && rt.RevokedAt == null && rt.ExpiresAt > now);
         }
 
         public async Task CreateAsync(RefreshToken token)
@@ -52,7 +51,7 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             var now = DateTime.UtcNow;
             return await _orderContext.RefreshTokens
-                .Where(rt => !rt.IsActive)
+                .Where(rt => rt.RevokedAt != null || rt.ExpiresAt <= now)
                 .ExecuteDeleteAsync();
         }
     }
