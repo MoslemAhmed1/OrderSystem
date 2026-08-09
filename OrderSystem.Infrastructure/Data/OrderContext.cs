@@ -40,7 +40,7 @@ namespace OrderSystem.Infrastructure.Data
                 .WithOne()
                 .HasForeignKey<Customer>(c => c.UserId)
                 .IsRequired(false)
-                .OnDelete(DeleteBehavior.SetNull); // TODO: I think should cascade
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Product
             modelBuilder.Entity<Product>()

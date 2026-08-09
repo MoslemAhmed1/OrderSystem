@@ -25,9 +25,8 @@ namespace OrderSystem.Infrastructure.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Token cleanup service started. Running every {Interval}.", _interval);
+            _logger.LogInformation("Token cleanup service started");
 
-            // Wait one full interval before the first run so app startup is not impacted.
             await Task.Delay(_interval, stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
@@ -38,7 +37,7 @@ namespace OrderSystem.Infrastructure.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Token cleanup failed.");
+                    _logger.LogError(ex, "Token cleanup failed");
                 }
 
                 await Task.Delay(_interval, stoppingToken);
@@ -51,7 +50,7 @@ namespace OrderSystem.Infrastructure.Services
             var repo = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
 
             var deleted = await repo.DeleteExpiredAndRevokedAsync();
-            _logger.LogInformation("Token cleanup: deleted {Count} expired/revoked refresh token(s).", deleted);
+            _logger.LogInformation("Token cleanup: deleted {Count} expired/revoked refresh token(s)", deleted);
         }
     }
 }

@@ -3,6 +3,7 @@ using OrderSystem.Application.DTOs.Auth;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
 using OrderSystem.Domain.Entities;
+using System.Security.Authentication;
 using OrderSystem.Domain.Enums;
 
 namespace OrderSystem.Infrastructure.Services
@@ -70,11 +71,11 @@ namespace OrderSystem.Infrastructure.Services
         {
             var user = await _userRepository.GetByUsernameAsync(request.Username);
             if (user is null)
-                throw new UnauthorizedAccessException(_translation.Translate("InvalidCredentials"));
+                throw new AuthenticationException(_translation.Translate("InvalidCredentials"));
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
             if (result == PasswordVerificationResult.Failed)
-                throw new UnauthorizedAccessException(_translation.Translate("InvalidCredentials"));
+                throw new AuthenticationException(_translation.Translate("InvalidCredentials"));
 
             if (result == PasswordVerificationResult.SuccessRehashNeeded)
             {
@@ -91,12 +92,25 @@ namespace OrderSystem.Infrastructure.Services
         {
             var hashedToken = _tokenService.HashToken(request.RefreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
-            if (storedToken is null || !storedToken.IsActive)
-                throw new UnauthorizedAccessException(_translation.Translate("InvalidRefreshToken"));
+            
+            if (storedToken is null)
+                throw new AuthenticationException(_translation.Translate("InvalidRefreshToken"));
+
+            if (storedToken.RevokedAt != null)
+            {
+                await _refreshTokenRepository.RevokeAllForUserAsync(storedToken.UserId);
+                await _uow.CommitAsync();
+                throw new AuthenticationException(_translation.Translate("TokenReuseDetected"));
+            }
+
+            if (!storedToken.IsActive)
+                throw new AuthenticationException(_translation.Translate("InvalidRefreshToken"));
 
             storedToken.RevokedAt = DateTime.UtcNow;
             
             var response = await IssueTokensAsync(storedToken.User, storedToken.DeviceInfo);
+            storedToken.ReplacedByTokenHash = _tokenService.HashToken(response.RefreshToken);
+            
             await _uow.CommitAsync();
 
             return response;
@@ -107,7 +121,7 @@ namespace OrderSystem.Infrastructure.Services
             var hashedToken = _tokenService.HashToken(refreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
             
-            if (storedToken is null || !storedToken.IsActive || storedToken.UserId != userId)
+            if (storedToken is null || storedToken.RevokedAt != null || storedToken.UserId != userId)
                 return;
 
             storedToken.RevokedAt = DateTime.UtcNow;

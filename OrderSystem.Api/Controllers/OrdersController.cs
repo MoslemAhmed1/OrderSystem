@@ -55,9 +55,9 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPatch("{id}/items")]
-        public async Task<IActionResult> UpdateItems(int id, List<CreateOrderItemViewModel> items)
+        public async Task<IActionResult> UpdateItems(int id, UpdateOrderItemsViewModel request)
         {
-            var requestItems = items.Select(i => i.ToDto()).ToList();
+            var requestItems = request.Items.Select(i => i.ToDto()).ToList();
             var order = await _orderService.UpdateItemsAsync(id, requestItems, GetUserId(), IsAdmin());
             return Ok(ApiResponse<OrderViewModel>.Success(order.ToViewModel(), "Order items updated."));
         }

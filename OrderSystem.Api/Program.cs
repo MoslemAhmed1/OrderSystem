@@ -120,7 +120,7 @@ builder.Services.AddHostedService<TokenCleanupService>();
 
 var app = builder.Build();
 
-app.UseExceptionHandler(_ => { });
+app.UseExceptionHandler(opt => { });
 
 if (app.Environment.IsDevelopment())
 {

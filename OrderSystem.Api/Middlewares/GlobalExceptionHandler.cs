@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using OrderSystem.Common;
+using System.Security.Authentication;
 
 namespace OrderSystem.Middlewares
 {
@@ -23,7 +24,7 @@ namespace OrderSystem.Middlewares
 
             httpContext.Response.StatusCode = statusCode;
 
-            var response = ApiResponse.Fail(message, statusCode);
+            var response = ApiResponse.Fail("", statusCode, new List<string> { message });
 
             await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);
 
@@ -34,7 +35,8 @@ namespace OrderSystem.Middlewares
         {
             return exception switch
             {
-                UnauthorizedAccessException e => ((e.Message.Contains("InvalidCredentials") || e.Message.Contains("InvalidRefreshToken")) ? StatusCodes.Status403Forbidden : StatusCodes.Status401Unauthorized, e.Message),
+                AuthenticationException e => (StatusCodes.Status401Unauthorized, e.Message),
+                UnauthorizedAccessException e => (StatusCodes.Status403Forbidden, e.Message),
                 InvalidOperationException e => (StatusCodes.Status400BadRequest, e.Message),
                 KeyNotFoundException e => (StatusCodes.Status404NotFound, e.Message),
                 ArgumentException e => (StatusCodes.Status400BadRequest, e.Message),

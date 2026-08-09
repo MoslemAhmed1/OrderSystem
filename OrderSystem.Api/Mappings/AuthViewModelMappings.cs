@@ -28,17 +28,11 @@ namespace OrderSystem.Mappings
             };
         }
 
-        public static RefreshTokenRequest ToDto(this RefreshTokenViewModel vm)
-        {
-            return new RefreshTokenRequest { RefreshToken = vm.RefreshToken };
-        }
-
         public static AuthViewModel ToViewModel(this AuthResponse dto)
         {
             return new AuthViewModel
             {
                 AccessToken = dto.AccessToken,
-                RefreshToken = dto.RefreshToken,
                 AccessTokenExpiresAt = dto.AccessTokenExpiresAt
             };
         }
