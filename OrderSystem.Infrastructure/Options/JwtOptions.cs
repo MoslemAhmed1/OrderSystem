@@ -1,4 +1,4 @@
-namespace OrderSystem.Application.Auth
+namespace OrderSystem.Infrastructure.Options
 {
     public class JwtOptions
     {

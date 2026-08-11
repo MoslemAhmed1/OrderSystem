@@ -1,5 +1,5 @@
-﻿using OrderSystem.Application.DTOs.Products;
-using OrderSystem.Domain.Entities;
+﻿using OrderSystem.Domain.Entities;
+using OrderSystem.Application.DTOs.Products;
 
 namespace OrderSystem.Application.Mappings
 {

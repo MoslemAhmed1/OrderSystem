@@ -1,5 +1,5 @@
-using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Infrastructure.Data;
+using OrderSystem.Application.Interfaces.Repositories;
 
 namespace OrderSystem.Infrastructure.Repositories
 {

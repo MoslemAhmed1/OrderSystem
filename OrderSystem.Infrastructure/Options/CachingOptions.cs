@@ -1,4 +1,4 @@
-namespace OrderSystem.Application.Caching
+namespace OrderSystem.Infrastructure.Options
 {
     public class CachingOptions
     {

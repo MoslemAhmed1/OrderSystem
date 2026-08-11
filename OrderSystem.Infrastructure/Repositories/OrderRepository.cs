@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using OrderSystem.Application.Interfaces.Repositories;
+
 using OrderSystem.Domain.Entities;
 using OrderSystem.Infrastructure.Data;
+using OrderSystem.Application.Interfaces.Repositories;
 
 namespace OrderSystem.Infrastructure.Repositories
 {
@@ -25,6 +26,7 @@ namespace OrderSystem.Infrastructure.Repositories
         public async Task<List<Order>> GetAllAsync()
         {
             return await _orderContext.Orders
+                .AsNoTracking()
                 .Include(o => o.Customer)
                 .Include(o => o.Items).ThenInclude(i => i.Product)
                 .ToListAsync();
@@ -33,6 +35,7 @@ namespace OrderSystem.Infrastructure.Repositories
         public async Task<List<Order>> GetAllByCustomerIdAsync(int customerId)
         {
             return await _orderContext.Orders
+                .AsNoTracking()
                 .Include(o => o.Customer)
                 .Include(o => o.Items).ThenInclude(i => i.Product)
                 .Where(o => o.CustomerId == customerId)

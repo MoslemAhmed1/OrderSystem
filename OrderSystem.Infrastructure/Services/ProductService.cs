@@ -1,8 +1,8 @@
-using OrderSystem.Application.DTOs.Products;
-using OrderSystem.Application.Interfaces.Repositories;
-using OrderSystem.Application.Interfaces.Services;
-using OrderSystem.Application.Mappings;
 using OrderSystem.Domain;
+using OrderSystem.Application.Mappings;
+using OrderSystem.Application.DTOs.Products;
+using OrderSystem.Application.Interfaces.Services;
+using OrderSystem.Application.Interfaces.Repositories;
 
 namespace OrderSystem.Infrastructure.Services
 {
@@ -97,7 +97,7 @@ namespace OrderSystem.Infrastructure.Services
             if (await _productRepository.IsUsedInOrdersAsync(id))
                 return DeleteResult.HasExistingOrders;
 
-            await _productRepository.DeleteAsync(id);
+            _productRepository.Delete(product);
             await _uow.CommitAsync();
 
             await _cache.RemoveAsync($"product_{id}");

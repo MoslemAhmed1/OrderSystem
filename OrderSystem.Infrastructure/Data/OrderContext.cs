@@ -39,7 +39,7 @@ namespace OrderSystem.Infrastructure.Data
                 .HasOne(c => c.User)
                 .WithOne()
                 .HasForeignKey<Customer>(c => c.UserId)
-                .IsRequired(false)
+                .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Product

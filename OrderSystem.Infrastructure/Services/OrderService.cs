@@ -1,10 +1,12 @@
-using OrderSystem.Application.Discount;
-using OrderSystem.Application.DTOs.Orders;
-using OrderSystem.Application.Interfaces.Repositories;
-using OrderSystem.Application.Interfaces.Services;
-using OrderSystem.Application.Mappings;
-using OrderSystem.Domain.Entities;
 using OrderSystem.Domain.Enums;
+using OrderSystem.Domain.Entities;
+
+using OrderSystem.Application.Mappings;
+using OrderSystem.Application.DTOs.Orders;
+using OrderSystem.Application.Interfaces.Services;
+using OrderSystem.Application.Interfaces.Repositories;
+
+using OrderSystem.Infrastructure.Discount;
 
 namespace OrderSystem.Infrastructure.Services
 {
@@ -52,7 +54,7 @@ namespace OrderSystem.Infrastructure.Services
             return order.ToDto();
         }
         
-        public async Task<List<OrderResponse>> GetAllAsync(int userId, bool isAdmin)
+        public async Task<List<OrderResponse>> GetAllAsync(int userId, bool isAdmin) // TODO: should be 2 separate methods for admin and customer
         {
             List<Order> orders;
 

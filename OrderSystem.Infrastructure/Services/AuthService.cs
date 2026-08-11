@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Identity;
+using System.Security.Authentication;
+
+using OrderSystem.Domain.Enums;
+using OrderSystem.Domain.Entities;
+
 using OrderSystem.Application.DTOs.Auth;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
-using OrderSystem.Domain.Entities;
-using System.Security.Authentication;
-using OrderSystem.Domain.Enums;
 
 namespace OrderSystem.Infrastructure.Services
 {

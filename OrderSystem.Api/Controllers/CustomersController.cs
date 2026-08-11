@@ -1,11 +1,13 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+
 using OrderSystem.Common;
 using OrderSystem.Domain;
 using OrderSystem.Mappings;
 using OrderSystem.ViewModels.Customers;
+
 using OrderSystem.Application.Interfaces.Services;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 
 namespace OrderSystem.Controllers
 {
@@ -17,8 +19,7 @@ namespace OrderSystem.Controllers
         private readonly ICustomerService _customerService;
         private readonly ITranslationService _translationService;
 
-        private int GetUserId() =>
-            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         public CustomersController(ICustomerService customerService, ITranslationService translationService)
         {

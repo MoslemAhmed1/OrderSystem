@@ -1,5 +1,5 @@
-using OrderSystem.Application.DTOs.Orders;
 using OrderSystem.Domain.Enums;
+using OrderSystem.Application.DTOs.Orders;
 
 namespace OrderSystem.Application.Interfaces.Services
 {

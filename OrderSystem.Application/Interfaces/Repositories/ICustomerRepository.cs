@@ -9,7 +9,7 @@ namespace OrderSystem.Application.Interfaces.Repositories
         Task<List<Customer>> GetAllAsync();
         Task AddAsync(Customer customer);
         void Update(Customer customer);
-        Task<bool> DeleteAsync(int id);
+        void Delete(Customer customer);
         Task<bool> IsUsedInOrdersAsync(int id);
     }
 }

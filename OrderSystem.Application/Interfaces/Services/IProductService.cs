@@ -1,5 +1,5 @@
-﻿using OrderSystem.Application.DTOs.Products;
-using OrderSystem.Domain;
+﻿using OrderSystem.Domain;
+using OrderSystem.Application.DTOs.Products;
 
 namespace OrderSystem.Application.Interfaces.Services
 {

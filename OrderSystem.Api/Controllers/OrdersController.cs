@@ -1,10 +1,12 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+
 using OrderSystem.Common;
 using OrderSystem.Mappings;
 using OrderSystem.ViewModels.Orders;
+
 using OrderSystem.Application.Interfaces.Services;
-using System.Security.Claims;
 
 namespace OrderSystem.Controllers
 {
@@ -20,8 +22,7 @@ namespace OrderSystem.Controllers
             _orderService = orderService;
         }
 
-        private int GetUserId() =>
-            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         private bool IsAdmin() => User.IsInRole("Admin");
 

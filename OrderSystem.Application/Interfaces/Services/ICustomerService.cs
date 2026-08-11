@@ -1,5 +1,5 @@
-using OrderSystem.Application.DTOs.Customers;
 using OrderSystem.Domain;
+using OrderSystem.Application.DTOs.Customers;
 
 namespace OrderSystem.Application.Interfaces.Services
 {
@@ -8,7 +8,7 @@ namespace OrderSystem.Application.Interfaces.Services
         Task<CustomerResponse> GetByIdAsync(int id);
         Task<List<CustomerResponse>> GetAllAsync();
         Task<CustomerResponse> CreateAsync(CreateCustomerRequest request);
-        Task<CustomerResponse> UpdateAsync(int id, UpdateCustomerRequest request);
+        Task<CustomerResponse> UpdateAsync(int id, UpdateCustomerRequest request); // TODO: 2 update functions, one for type, another for names
         Task<CustomerResponse> UpdateSelfAsync(int userId, UpdateCustomerProfileRequest request);
         Task<DeleteResult> DeleteAsync(int id);
     }

@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Options;
-using OrderSystem.Domain.Enums;
+﻿using OrderSystem.Domain.Enums;
+using Microsoft.Extensions.Options;
+using OrderSystem.Infrastructure.Options;
 
-namespace OrderSystem.Application.Discount
+namespace OrderSystem.Infrastructure.Discount
 {
     public class DiscountPolicy : IDiscountPolicy
     {

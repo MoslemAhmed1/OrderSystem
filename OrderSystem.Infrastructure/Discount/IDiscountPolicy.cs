@@ -1,6 +1,6 @@
 ﻿using OrderSystem.Domain.Enums;
 
-namespace OrderSystem.Application.Discount
+namespace OrderSystem.Infrastructure.Discount
 {
     public interface IDiscountPolicy
     {

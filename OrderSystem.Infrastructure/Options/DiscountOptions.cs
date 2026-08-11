@@ -1,4 +1,4 @@
-﻿namespace OrderSystem.Application.Discount
+﻿namespace OrderSystem.Infrastructure.Options
 {
     public class DiscountOptions
     {

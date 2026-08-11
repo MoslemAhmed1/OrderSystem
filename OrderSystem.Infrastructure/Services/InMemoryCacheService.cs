@@ -1,6 +1,7 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using OrderSystem.Application.Caching;
+using Microsoft.Extensions.Caching.Memory;
+
+using OrderSystem.Infrastructure.Options;
 using OrderSystem.Application.Interfaces.Services;
 
 namespace OrderSystem.Infrastructure.Services

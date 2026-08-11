@@ -1,11 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using OrderSystem.Application.DTOs.Auth;
-using OrderSystem.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
+
 using OrderSystem.Common;
 using OrderSystem.Mappings;
 using OrderSystem.ViewModels.Auth;
-using System.Security.Claims;
+
+using OrderSystem.Application.DTOs.Auth;
+using OrderSystem.Application.Interfaces.Services;
 
 namespace OrderSystem.Controllers
 {

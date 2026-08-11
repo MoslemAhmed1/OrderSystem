@@ -1,12 +1,14 @@
-using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using OrderSystem.Application.Auth;
-using OrderSystem.Application.Interfaces.Services;
+
 using OrderSystem.Domain.Entities;
+using OrderSystem.Infrastructure.Options;
+using OrderSystem.Application.Interfaces.Services;
 
 namespace OrderSystem.Infrastructure.Services
 {

@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using OrderSystem.Application.Interfaces.Repositories;
+
 using OrderSystem.Domain.Entities;
 using OrderSystem.Infrastructure.Data;
+using OrderSystem.Application.Interfaces.Repositories;
 
 namespace OrderSystem.Infrastructure.Repositories
 {
@@ -23,7 +24,7 @@ namespace OrderSystem.Infrastructure.Repositories
         }
         public async Task<List<Product>> GetAllAsync()
         {
-            return await _orderContext.Products.ToListAsync();
+            return await _orderContext.Products.AsNoTracking().ToListAsync();
         }
         public async Task AddAsync(Product product)
         {
@@ -33,15 +34,9 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             _orderContext.Products.Update(product);
         }
-        public async Task<bool> DeleteAsync(int id)
+        public void Delete(Product product)
         {
-            var product = await _orderContext.Products.FindAsync(id);
-            if (product != null)
-            {
-                _orderContext.Products.Remove(product);
-                return true;
-            }
-            return false;
+            _orderContext.Products.Remove(product);
         }
 
         public async Task<bool> IsUsedInOrdersAsync(int id)
