@@ -86,7 +86,7 @@ namespace OrderSystem.Controllers
 
         private string GetDeviceInfo()
         {
-            return Request.Headers.TryGetValue("User-Agent", out var userAgent) ? userAgent.ToString() : "Unknown Device";
+            return Request.Headers.TryGetValue("User-Agent", out var userAgent) ? userAgent.ToString() : "Unknown";
         }
     }
 }

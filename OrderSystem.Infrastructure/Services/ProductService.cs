@@ -11,23 +11,29 @@ namespace OrderSystem.Infrastructure.Services
         private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _uow;
         private readonly ICacheService _cache;
+        private readonly ICacheVersioningService _cacheVersioning;
         private readonly ITranslationService _translation;
+        private const string versionKey = "products:version"; // Should be placed in configurations
 
         public ProductService(
             IProductRepository productRepository, 
             IUnitOfWork uow, 
             ICacheService cache, 
+            ICacheVersioningService cacheVersioning,
             ITranslationService translation)
         {
             _productRepository = productRepository;
             _uow = uow;
             _cache = cache;
+            _cacheVersioning = cacheVersioning;
             _translation = translation;
         }
 
         public async Task<ProductResponse> GetByIdAsync(int id)
         {
-            var cacheKey = $"product_{id}";
+            var version = await _cacheVersioning.GetVersionAsync(versionKey);
+
+            var cacheKey = $"products:v{version}:{id}";
             var cachedProduct = await _cache.GetAsync<ProductResponse>(cacheKey);
             if (cachedProduct is not null)
                 return cachedProduct;
@@ -45,7 +51,8 @@ namespace OrderSystem.Infrastructure.Services
 
         public async Task<List<ProductResponse>> GetAllAsync()
         {
-            var cacheKey = "products_all";
+            var version = await _cacheVersioning.GetVersionAsync(versionKey);
+            var cacheKey = $"products:v{version}:all";
             var cachedProducts = await _cache.GetAsync<List<ProductResponse>>(cacheKey);
             if (cachedProducts is not null)
                 return cachedProducts;
@@ -66,7 +73,7 @@ namespace OrderSystem.Infrastructure.Services
             await _uow.CommitAsync();
 
             var response = product.ToDto();
-            await _cache.RemoveAsync("products_all");
+            await _cacheVersioning.UpdateVersionAsync(versionKey);
 
             return response;
         }
@@ -82,8 +89,7 @@ namespace OrderSystem.Infrastructure.Services
             await _uow.CommitAsync();
 
             var response = product.ToDto();
-            await _cache.RemoveAsync($"product_{id}");
-            await _cache.RemoveAsync("products_all");
+            await _cacheVersioning.UpdateVersionAsync(versionKey);
 
             return response;
         }
@@ -100,8 +106,7 @@ namespace OrderSystem.Infrastructure.Services
             _productRepository.Delete(product);
             await _uow.CommitAsync();
 
-            await _cache.RemoveAsync($"product_{id}");
-            await _cache.RemoveAsync("products_all");
+            await _cacheVersioning.UpdateVersionAsync(versionKey);
             return DeleteResult.Success;
         }
     }

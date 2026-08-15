@@ -5,7 +5,7 @@ namespace OrderSystem.Mappings
 {
     public static class AuthViewModelMappings
     {
-        public static RegisterRequest ToDto(this RegisterViewModel vm, string? deviceInfo)
+        public static RegisterRequest ToDto(this RegisterViewModel vm, string deviceInfo)
         {
             return new RegisterRequest
             {
@@ -18,7 +18,7 @@ namespace OrderSystem.Mappings
             };
         }
 
-        public static LoginRequest ToDto(this LoginViewModel vm, string? deviceInfo)
+        public static LoginRequest ToDto(this LoginViewModel vm, string deviceInfo)
         {
             return new LoginRequest
             {

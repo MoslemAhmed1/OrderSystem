@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrderSystem.Domain.Entities;
 
-namespace OrderSystem.Infrastructure.Data
+namespace OrderSystem.Infrastructure.Context
 {
     public class OrderContext : DbContext
     {
@@ -14,7 +14,7 @@ namespace OrderSystem.Infrastructure.Data
 
         public OrderContext(DbContextOptions<OrderContext> options) : base(options) { }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder) // TODO: Split Configurations & implement IEntityTypeConfiguration<T>
         {
             base.OnModelCreating(modelBuilder);
 
@@ -105,8 +105,12 @@ namespace OrderSystem.Infrastructure.Data
                 .HasConversion<string>()
                 .HasMaxLength(20);
 
-            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
-            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
 
             // RefreshToken
             modelBuilder.Entity<RefreshToken>()
@@ -114,6 +118,18 @@ namespace OrderSystem.Infrastructure.Data
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RefreshToken>()
+                .Property(rt => rt.TokenHash)
+                .IsRequired();
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(rt => rt.TokenHash)
+                .IsUnique();
+
+            modelBuilder.Entity<RefreshToken>()
+                .Property(rt => rt.DeviceInfo)
+                .IsRequired();
         }
     }
 }

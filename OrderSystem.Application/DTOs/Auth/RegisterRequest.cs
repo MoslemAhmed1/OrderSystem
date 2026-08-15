@@ -24,6 +24,6 @@ namespace OrderSystem.Application.DTOs.Auth
         [StringLength(50, MinimumLength = 1)]
         public required string LastName { get; set; }
 
-        public string? DeviceInfo { get; set; }
+        public string DeviceInfo { get; set; } = "Unknown";
     }
 }

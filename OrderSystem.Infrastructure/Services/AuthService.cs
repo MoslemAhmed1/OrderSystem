@@ -46,6 +46,7 @@ namespace OrderSystem.Infrastructure.Services
 
             var user = new User
             {
+                //UserId = 0, // TODO: explicitly set user entity as Added, and not Modified
                 Username = request.Username,
                 Email = request.Email,
                 PasswordHash = "",
@@ -106,7 +107,7 @@ namespace OrderSystem.Infrastructure.Services
             }
 
             if (!storedToken.IsActive)
-                throw new AuthenticationException(_translation.Translate("InvalidRefreshToken"));
+                throw new AuthenticationException(_translation.Translate("RefreshTokenExpired"));
 
             storedToken.RevokedAt = DateTime.UtcNow;
             
@@ -118,7 +119,7 @@ namespace OrderSystem.Infrastructure.Services
             return response;
         }
 
-        public async Task RevokeTokenAsync(string refreshToken, int userId)
+        public async Task RevokeTokenAsync(string refreshToken, int userId) 
         {
             var hashedToken = _tokenService.HashToken(refreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
@@ -130,15 +131,12 @@ namespace OrderSystem.Infrastructure.Services
             await _uow.CommitAsync();
         }
 
-        private async Task<AuthResponse> IssueTokensAsync(User user, string? deviceInfo)
+        private async Task<AuthResponse> IssueTokensAsync(User user, string deviceInfo)
         {
-            if (!string.IsNullOrEmpty(deviceInfo))
+            var activeToken = await _refreshTokenRepository.GetActiveTokenByUserAndDeviceAsync(user.Id, deviceInfo);
+            if (activeToken != null)
             {
-                var activeToken = await _refreshTokenRepository.GetActiveTokenByUserAndDeviceAsync(user.Id, deviceInfo);
-                if (activeToken != null)
-                {
-                    activeToken.RevokedAt = DateTime.UtcNow;
-                }
+                activeToken.RevokedAt = DateTime.UtcNow;
             }
 
             var accessToken = _tokenService.GenerateAccessToken(user);

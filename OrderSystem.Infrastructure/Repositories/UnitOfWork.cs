@@ -1,4 +1,4 @@
-using OrderSystem.Infrastructure.Data;
+using OrderSystem.Infrastructure.Context;
 using OrderSystem.Application.Interfaces.Repositories;
 
 namespace OrderSystem.Infrastructure.Repositories

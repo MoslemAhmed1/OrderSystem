@@ -6,8 +6,6 @@ using OrderSystem.Application.DTOs.Orders;
 using OrderSystem.Application.Interfaces.Services;
 using OrderSystem.Application.Interfaces.Repositories;
 
-using OrderSystem.Infrastructure.Discount;
-
 namespace OrderSystem.Infrastructure.Services
 {
     public class OrderService : IOrderService
@@ -18,7 +16,8 @@ namespace OrderSystem.Infrastructure.Services
         private readonly IUnitOfWork _uow;
         private readonly IDiscountPolicy _discountPolicy;
         private readonly ITranslationService _translation;
-        private readonly ICacheService _cache;
+        private readonly ICacheVersioningService _cacheVersioning;
+        private const string versionKey = "products:version"; // TODO: move to configuration
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -27,7 +26,7 @@ namespace OrderSystem.Infrastructure.Services
             IUnitOfWork uow,
             IDiscountPolicy discountPolicy,
             ITranslationService translation,
-            ICacheService cache)
+            ICacheVersioningService cacheVersioning)
         {
             _orderRepository = orderRepository;
             _customerRepository = customerRepository;
@@ -35,7 +34,7 @@ namespace OrderSystem.Infrastructure.Services
             _uow = uow;
             _discountPolicy = discountPolicy;
             _translation = translation;
-            _cache = cache;
+            _cacheVersioning = cacheVersioning;
         }
         
         public async Task<OrderResponse> GetByIdAsync(int id, int userId, bool isAdmin)
@@ -96,7 +95,7 @@ namespace OrderSystem.Infrastructure.Services
             await _orderRepository.AddAsync(order);
             await _uow.CommitAsync();
 
-            await InvalidateProductCacheAsync(affectedProductIds);
+            await InvalidateProductCacheAsync();
             
             var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
             if (savedOrder is null)
@@ -149,8 +148,7 @@ namespace OrderSystem.Infrastructure.Services
 
             await _uow.CommitAsync();
 
-            var allAffectedIds = oldProductIds.Union(newProductIds).ToList();
-            await InvalidateProductCacheAsync(allAffectedIds);
+            await InvalidateProductCacheAsync();
 
             return order.ToDto();
         }
@@ -172,7 +170,7 @@ namespace OrderSystem.Infrastructure.Services
 
             await _uow.CommitAsync();
 
-            await InvalidateProductCacheAsync(affectedProductIds);
+            await InvalidateProductCacheAsync();
         }
 
         public async Task DeleteAsync(int id)
@@ -232,12 +230,9 @@ namespace OrderSystem.Infrastructure.Services
             return productIds;
         }
 
-        private async Task InvalidateProductCacheAsync(List<int> productIds)
+        private async Task InvalidateProductCacheAsync()
         {
-            foreach (var id in productIds)
-                await _cache.RemoveAsync($"product_{id}");
-
-            await _cache.RemoveAsync("products_all");
+            await _cacheVersioning.UpdateVersionAsync(versionKey);
         }
 
         private decimal CalculateTotal(List<OrderItem> items, CustomerType customerType)

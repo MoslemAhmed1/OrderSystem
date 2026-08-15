@@ -1,8 +1,9 @@
 ﻿using OrderSystem.Domain.Enums;
 using Microsoft.Extensions.Options;
 using OrderSystem.Infrastructure.Options;
+using OrderSystem.Application.Interfaces.Services;
 
-namespace OrderSystem.Infrastructure.Discount
+namespace OrderSystem.Infrastructure.Services
 {
     public class DiscountPolicy : IDiscountPolicy
     {

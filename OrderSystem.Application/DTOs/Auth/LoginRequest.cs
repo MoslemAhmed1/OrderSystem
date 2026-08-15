@@ -10,6 +10,6 @@ namespace OrderSystem.Application.DTOs.Auth
         [Required]
         public required string Password { get; set; }
 
-        public string? DeviceInfo { get; set; }
+        public string DeviceInfo { get; set; } = "Unknown";
     }
 }

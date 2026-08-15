@@ -12,7 +12,7 @@ namespace OrderSystem.Infrastructure.Services
         private readonly TimeSpan _defaultExpiration;
         private readonly TimeSpan _slidingExpiration;
 
-        public InMemoryCacheService(IMemoryCache memoryCache, IOptions<CachingOptions> cachingOptions)
+        public InMemoryCacheService(IMemoryCache memoryCache, IOptions<CachingOptions> cachingOptions) // TODO: IOptionsMonitor ??
         {
             _memoryCache = memoryCache;
             _defaultExpiration = TimeSpan.FromMinutes(cachingOptions.Value.DefaultExpirationMinutes);

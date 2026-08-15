@@ -9,12 +9,14 @@ public class RefreshToken
     public int UserId { get; set; }
     public User User { get; set; } = null!;
 
-    public string? DeviceInfo { get; set; }
+    public string DeviceInfo { get; set; } = "Unknown";
 
     public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? RevokedAt { get; set; }
     public string? ReplacedByTokenHash { get; set; }
 
-    public bool IsActive => RevokedAt is null && ExpiresAt > DateTime.UtcNow;
+    public bool IsExpired => ExpiresAt <= DateTime.UtcNow;
+    public bool IsRevoked => RevokedAt != null;
+    public bool IsActive => !IsRevoked && !IsExpired;
 }

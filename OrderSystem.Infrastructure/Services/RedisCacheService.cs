@@ -1,5 +1,6 @@
 using System.Text.Json;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Caching.Distributed;
 
@@ -13,14 +14,14 @@ namespace OrderSystem.Infrastructure.Services
         private readonly IDistributedCache _distributedCache;
         private readonly TimeSpan _defaultExpiration;
         private readonly TimeSpan _slidingExpiration;
-        private readonly NullCacheService _nullCacheService;
+        private readonly ILogger<RedisCacheService> _logger;
 
-        public RedisCacheService(IDistributedCache distributedCache, IOptions<CachingOptions> cachingOptions)
+        public RedisCacheService(IDistributedCache distributedCache, IOptions<CachingOptions> cachingOptions, ILogger<RedisCacheService> logger) // TODO: IOptionsMonitor ??
         {
             _distributedCache = distributedCache;
             _defaultExpiration = TimeSpan.FromMinutes(cachingOptions.Value.DefaultExpirationMinutes);
             _slidingExpiration = TimeSpan.FromMinutes(cachingOptions.Value.SlidingExpirationMinutes);
-            _nullCacheService = new NullCacheService();
+            _logger = logger;
         }
 
         public async Task<T?> GetAsync<T>(string key)
@@ -40,9 +41,10 @@ namespace OrderSystem.Infrastructure.Services
                     return default;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return await _nullCacheService.GetAsync<T>(key);
+                _logger.LogWarning(ex, $"Redis GET failed for key '{key}'");
+                return default;
             }
         }
 
@@ -59,9 +61,10 @@ namespace OrderSystem.Infrastructure.Services
                 var jsonData = JsonSerializer.Serialize(value);
                 await _distributedCache.SetStringAsync(key, jsonData, options);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await _nullCacheService.SetAsync(key, value, absoluteExpiration, slidingExpiration);
+                _logger.LogWarning(ex, $"Redis SET failed for key '{key}'");
+                return; 
             }
         }
 
@@ -71,9 +74,10 @@ namespace OrderSystem.Infrastructure.Services
             {
                 await _distributedCache.RemoveAsync(key);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await _nullCacheService.RemoveAsync(key);
+                _logger.LogWarning(ex, $"Redis REMOVE failed for key '{key}'");
+                return;
             }
         }
     }
