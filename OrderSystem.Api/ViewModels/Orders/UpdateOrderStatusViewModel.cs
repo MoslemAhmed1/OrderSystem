@@ -1,11 +1,11 @@
-﻿using OrderSystem.Domain.Enums;
+using OrderSystem.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace OrderSystem.ViewModels.Orders
 {
-    public class UpdateOrderStatusViewModel
+    public record UpdateOrderStatusViewModel
     {
         [Required]
-        public OrderStatus OrderStatus { get; set; }
+        public OrderStatus OrderStatus { get; init; }
     }
 }

@@ -1,6 +1,7 @@
 using System.Text;
-
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using OrderSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -59,9 +60,8 @@ builder.Services
             ValidAudience = jwtOptions["Audience"],
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions["Secret"]!)),
-            ValidateLifetime = true, // TODO
-            
-            ClockSkew = TimeSpan.Zero, // TODO: learn what this does
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
         };
     });
 builder.Services.AddAuthorization();
@@ -87,17 +87,20 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddSingleton<ITokenHasher, Sha256TokenHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddHostedService<TokenCleanupService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // Localization
-builder.Services.AddLocalization();
-var supportedCultures = new[] { "en", "ar" }; // TODO: configuration
+builder.Services.AddLocalization(options => { options.ResourcesPath = "Resources"; });
+builder.Services.Configure<AppLocalizationOptions>(builder.Configuration.GetSection("Localization"));
+
+var locOptions = builder.Configuration.GetSection("Localization").Get<AppLocalizationOptions>();
 var localizationOptions = new RequestLocalizationOptions()
-    .SetDefaultCulture("en") // TODO: configuration
-    .AddSupportedCultures(supportedCultures) // TODO: configuration
-    .AddSupportedUICultures(supportedCultures);
-builder.Services.AddSingleton<ITranslationService, TranslationService>();
+    .SetDefaultCulture(locOptions.DefaultCulture)
+    .AddSupportedCultures(locOptions.SupportedCultures)
+    .AddSupportedUICultures(locOptions.SupportedCultures);
+builder.Services.AddScoped<ITranslationService, TranslationService>();
 
 // Caching
 builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection("Caching"));
@@ -122,7 +125,6 @@ else
 }
 
 builder.Services.AddSingleton<ICacheVersioningService, CacheVersioningService>();
-
 
 var app = builder.Build();
 
@@ -177,45 +179,62 @@ app.Run();
 /*
 Upcoming Tasks:
 Part 1 - Small Modifications:
-- Move IDiscountPolicy to Application Layer, and DiscountPolicy to Infrastructure/Services/ [DONE]
-- Apply cache versioning, and cache invalidation on update, delete, and create [DONE, needs testing]
-- Learn & Apply automatic migrations (automatically apply migrations & update databse on application startup) [DONE]
-- Make sure of the optional attributes in RefreshToken entity [DONE]
+- Move IDiscountPolicy to Application Layer, and DiscountPolicy to Infrastructure/Services/
+- Apply cache versioning, and cache invalidation on update, delete, and create
+- Learn & Apply automatic migrations (automatically apply migrations & update databse on application startup)
+- Make sure of the optional attributes in RefreshToken entity
 
 Part 2 - C# Topics:
 - Learn Extension Methods
 - Learn Records, Types, when to use each & Comparison between records & classes
-- Learn Sync vs Async vs Multi-threading
+- Learn Multi-threading, Sync vs Async
 
 Part 3 - EF Core Topics:
 - Learn Tracking vs AsNoTracking vs AsNoTrackingWithIdentityResolution
+- Learn Entry State Tracking (Added, Modified, Deleted, Unchanged, Detached)
 - Learn FindAsync vs FirstOrDefaultAsync
 - Learn First vs FirstOrDefault
 - Learn Single vs SingleOrDefault
 - Learn Split Queries (AsSplitQuery) vs Single Query (AsSingleQuery)
-- Learn Entry State Tracking (Added, Modified, Deleted, Unchanged, Detached)
 - Learn TPT vs TPC vs TPH
-- Revise N+1 query problem
 
 Part 4 - Apply EF Concepts:
-- Learn to explicitly specify entry as Added, Unchanged, Modified, Deleted, Detached [Creating User & Customer in RegisterAsync]
-- Learn & Implement Transactions in Unit of Work (BeginTransaction, Commit, Rollback)
+- Learn to explicitly specify entry as Added, Unchanged, Modified, Deleted, Detached (Creating User & Customer in RegisterAsync)
+    - Can't explicitly put an id and change the state to "Added" unless Id is a Guid
+    - Solved by linking the user object itself with the navigation property in Customer and RefreshToken
+        1- EF Core's ChangeTracker tracks these links and builds a dependency graph, so it sees that the 
+           user object is the parent and the user nav prop links in customer & refreshtoken are children and so it inserts the user first.
+        2- When calling SaveChanges, EF Core starts processing the dependency graph from top down, so it inserts
+           the user first, gets the generated Id.
+        3- It then continues processing the dependency graph, so it replaces the userId in Customer & RefreshToken
+           with the one which was obtained after inserting the user. This is called "Relationship Fixup".
+        4- After the dependencies are handled, then customer & refresh token entities are inserted safely.
+- Learn & Implement Transactions in Unit of Work (BeginTransaction, Commit, Rollback, ...)
 
 Part 5 - JWT & Passwords:
-- Learn JWT headers, claims, and payload
-- Learn JWT vs JWE vs JWS
-- Learn about different Passowrd Hashing algorithms, and make sure refresh tokens are revoked if password is changed
+- Learn JWT headers, payload, signature Sign(header + . + payload, secretKey)
+- Learn JWT vs JWS vs JWE
 
 Part 6 - Authentication & Authorization:
 - AuthService: Apply Password Hashing Abstration & DI
 - TokenService: Abstraction for SHA256 hashing, and use it for hashing refresh tokens
 - Move IssueTokens into TokenService
 - Add option to logout from all sessions, and logout from this session
-- Authentication & Authorization needs revision and modifications
 
 Part 7 - Translations:
 - Revise Translations(IStringLocalizer, IStringLocalizerFactory, and every related line in program.cs), Implement Translations for all messages, errors, view models(the views presented to the client), and DTOs(the data sent to the client)
-----------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------
+
+- TODO: Implement Content Translation
+- TODO: Deep dive into the comparisons stated above
+- TODO: Read more about Navigation Fixup
+- TODO: Read about Tasks ConfigureAwait
+- TODO: Records (records, record class, record struct, ...), Types, when to use each & Comparison between records & classes
+- TODO: JWT vs JWS vs JWE
+- TODO: Split Queries (AsSplitQuery) vs Single Query (AsSingleQuery), explicit joins
+
+------------------------------------------------------------------------------------------
 Finished Tasks:
 1-  Discount: move to appsettings.json, so any discount can be applied without changing the code [Configurations, DONE]
 2-  Unit of Work: remove repositories, each service will have an instance of uow and the repositories it needs only [DONE]
@@ -232,32 +251,7 @@ Finished Tasks:
 13- Language Translations (Localization)
 ----------------------------------------------------------------------
 Questions:
-
-----------------------------------------------------------------------
-Meeting Flow:
-- Models:
-    - Data Annotations vs Fluent API
-    - Migrations Up & Down purpose
-- Repositories & Unit of Work:
-    - Purpose of Repositories
-    - Immediate vs Deferred Execution in LINQ (IQueryable vs IEnumerable)
-    - Eager vs Lazy vs Explicit Loading in EF Core
-    - Purpose of Unit of Work 
-- Services:
-    - AutoMapper
-    - Why Services should not return Entities directly to Controllers
-- Controllers:
-    - Why Controllers should not return Entities directly to Clients
-    - Generic Response
-- Program.cs:
-    - Purpose of JsonSerializerOptions
-    - Scoped vs Singleton vs Transient
-----------------------------------------------------------------------
-Extra Notes:
-----------------------------------------------------------------------
-Extra Changes:
-- Presentation Layer Abstraction: 
-    - Instead of exposing the Infrastructure Layer to the Presentation Layer, we can 
-    create a class library which becomes an abstraction between the Presentation layer and 
-    the Application&Infrastructure layers
+- Should I split functionalities like (logout, logoutall), (2 overloaded revoke functions, revokeall&revokeby), etc..
+- CachingOptions using which type of IOptions ?
+- AppLocalizationOptions correct approach or just keep it as raw config ?
 */

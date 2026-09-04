@@ -1,4 +1,4 @@
-﻿using OrderSystem.Domain.Entities;
+using OrderSystem.Domain.Entities;
 using OrderSystem.Application.DTOs.Customers;
 
 namespace OrderSystem.Application.Mappings
@@ -16,18 +16,6 @@ namespace OrderSystem.Application.Mappings
                 CustomerType = customer.CustomerType.ToString()
             };
         }
-
-        // Dto -> Entity
-        public static Customer ToEntity(this CreateCustomerRequest request)
-        {
-            return new Customer
-            {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                CustomerType = request.CustomerType
-            };
-        }
-
         public static void UpdateFrom(this Customer entity, UpdateCustomerRequest request)
         {
             entity.FirstName = request.FirstName;

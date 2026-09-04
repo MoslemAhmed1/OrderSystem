@@ -1,4 +1,5 @@
-﻿using OrderSystem.Application.DTOs.Products;
+using OrderSystem.Api.ViewModels.Products;
+using OrderSystem.Application.DTOs.Products;
 using OrderSystem.ViewModels.Products;
 
 namespace OrderSystem.Mappings
@@ -11,7 +12,10 @@ namespace OrderSystem.Mappings
             {
                 Name = vm.Name,
                 Price = vm.Price,
-                StockQuantity = vm.StockQuantity
+                StockQuantity = vm.StockQuantity,
+                Translations = vm.Translations
+                    .Select(t => new ProductTranslationRequest { Culture = t.Culture, Name = t.Name })
+                    .ToList()
             };
         }
 
@@ -22,6 +26,15 @@ namespace OrderSystem.Mappings
                 Name = vm.Name,
                 Price = vm.Price,
                 StockQuantity = vm.StockQuantity
+            };
+        }
+
+        public static ProductTranslationRequest ToDto(this ProductTranslationViewModel vm)
+        {
+            return new ProductTranslationRequest 
+            { 
+                Culture = vm.Culture, 
+                Name = vm.Name 
             };
         }
 

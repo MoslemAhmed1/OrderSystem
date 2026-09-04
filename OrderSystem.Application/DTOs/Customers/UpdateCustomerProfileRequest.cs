@@ -1,8 +1,8 @@
 namespace OrderSystem.Application.DTOs.Customers
 {
-    public class UpdateCustomerProfileRequest
+    public record UpdateCustomerProfileRequest
     {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
+        public string FirstName { get; init; } = string.Empty;
+        public string LastName { get; init; } = string.Empty;
     }
 }

@@ -2,6 +2,9 @@ namespace OrderSystem.Application.Interfaces.Repositories
 {
     public interface IUnitOfWork
     {
-        Task<int> CommitAsync();
+        Task<int> SaveChangesAsync();
+        Task BeginTransactionAsync();
+        Task CommitTransactionAsync();
+        Task RollbackTransactionAsync();
     }
 }

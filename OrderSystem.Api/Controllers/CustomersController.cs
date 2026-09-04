@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 
 using OrderSystem.Common;
 using OrderSystem.Domain;
+using OrderSystem.Domain.Enums;
 using OrderSystem.Mappings;
 using OrderSystem.ViewModels.Customers;
 
@@ -28,47 +29,39 @@ namespace OrderSystem.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> GetById(int id)
         {
             var customer = await _customerService.GetByIdAsync(id);
-            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel()));
+            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(_translationService)));
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> GetAll()
         {
             var customers = await _customerService.GetAllAsync();
-            var result = customers.Select(c => c.ToViewModel()).ToList();
+            var result = customers.Select(c => c.ToViewModel(_translationService)).ToList();
             return Ok(ApiResponse<List<CustomerViewModel>>.Success(result));
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create(CreateCustomerViewModel request)
-        {
-            var customer = await _customerService.CreateAsync(request.ToDto());
-            return CreatedAtAction(nameof(GetById), new { id = customer.Id }, ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(), _translationService.Translate("CustomerCreated"), StatusCodes.Status201Created));
-        }
-
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> Update(int id, UpdateCustomerViewModel request)
         {
             var customer = await _customerService.UpdateAsync(id, request.ToDto());
-            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(), _translationService.Translate("CustomerUpdated")));
+            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(_translationService), _translationService.Translate("CustomerUpdated")));
         }
 
         [HttpPut("me")]
         public async Task<IActionResult> UpdateSelf(UpdateCustomerProfileViewModel request)
         {
             var customer = await _customerService.UpdateSelfAsync(GetUserId(), request.ToDto());
-            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(), _translationService.Translate("CustomerUpdated")));
+            return Ok(ApiResponse<CustomerViewModel>.Success(customer.ToViewModel(_translationService), _translationService.Translate("CustomerUpdated")));
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _customerService.DeleteAsync(id);

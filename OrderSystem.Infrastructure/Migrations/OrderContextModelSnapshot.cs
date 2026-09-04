@@ -144,6 +144,24 @@ namespace OrderSystem.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("OrderSystem.Domain.Entities.ProductTranslation", b =>
+                {
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Culture")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("ProductId", "Culture");
+
+                    b.ToTable("ProductTranslations");
+                });
+
             modelBuilder.Entity("OrderSystem.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -161,9 +179,6 @@ namespace OrderSystem.Migrations
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("ReplacedByTokenHash")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("datetime2");
@@ -229,7 +244,7 @@ namespace OrderSystem.Migrations
             modelBuilder.Entity("OrderSystem.Domain.Entities.Customer", b =>
                 {
                     b.HasOne("OrderSystem.Domain.Entities.User", "User")
-                        .WithOne()
+                        .WithOne("Customer")
                         .HasForeignKey("OrderSystem.Domain.Entities.Customer", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -267,6 +282,17 @@ namespace OrderSystem.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("OrderSystem.Domain.Entities.ProductTranslation", b =>
+                {
+                    b.HasOne("OrderSystem.Domain.Entities.Product", "Product")
+                        .WithMany("Translations")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("OrderSystem.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("OrderSystem.Domain.Entities.User", "User")
@@ -283,8 +309,15 @@ namespace OrderSystem.Migrations
                     b.Navigation("Items");
                 });
 
+            modelBuilder.Entity("OrderSystem.Domain.Entities.Product", b =>
+                {
+                    b.Navigation("Translations");
+                });
+
             modelBuilder.Entity("OrderSystem.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Customer");
+
                     b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618

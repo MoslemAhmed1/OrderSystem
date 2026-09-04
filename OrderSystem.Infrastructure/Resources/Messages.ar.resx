@@ -64,6 +64,9 @@
   <data name="ProductUpdated" xml:space="preserve">
     <value>تم تحديث المنتج بنجاح.</value>
   </data>
+  <data name="TranslationUpdated" xml:space="preserve">
+    <value>تم تحديث ترجمة المنتج بنجاح.</value>
+  </data>
   <data name="ProductNotFound" xml:space="preserve">
     <value>المنتج {0} غير موجود.</value>
   </data>
@@ -129,6 +132,72 @@
   </data>
   <data name="OrderAccessDenied" xml:space="preserve">
     <value>تم رفض الوصول إلى هذا الطلب.</value>
+  </data>
+  <data name="TokenReuseDetected" xml:space="preserve">
+    <value>تم اكتشاف إعادة استخدام الرمز. تم إلغاء جميع الجلسات.</value>
+  </data>
+  <data name="RefreshTokenExpired" xml:space="preserve">
+    <value>انتهت صلاحية رمز التحديث.</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>المستخدم غير موجود.</value>
+  </data>
+  <data name="UserRegistered" xml:space="preserve">
+    <value>تم تسجيل المستخدم بنجاح.</value>
+  </data>
+  <data name="UserLoggedIn" xml:space="preserve">
+    <value>تم تسجيل الدخول بنجاح.</value>
+  </data>
+  <data name="RefreshTokenMissing" xml:space="preserve">
+    <value>رمز التحديث مفقود.</value>
+  </data>
+  <data name="TokenRefreshed" xml:space="preserve">
+    <value>تم تحديث الرمز بنجاح.</value>
+  </data>
+  <data name="UserLoggedOut" xml:space="preserve">
+    <value>تم تسجيل الخروج بنجاح.</value>
+  </data>
+  <data name="UserLoggedOutAll" xml:space="preserve">
+    <value>تم تسجيل الخروج من جميع الجلسات بنجاح.</value>
+  </data>
+  <data name="PasswordChanged" xml:space="preserve">
+    <value>تم تغيير كلمة المرور بنجاح. يرجى تسجيل الدخول مرة أخرى.</value>
+  </data>
+  <data name="OrderCreated" xml:space="preserve">
+    <value>تم إنشاء الطلب بنجاح.</value>
+  </data>
+  <data name="OrderStatusUpdated" xml:space="preserve">
+    <value>تم تحديث حالة الطلب.</value>
+  </data>
+  <data name="OrderItemsUpdated" xml:space="preserve">
+    <value>تم تحديث عناصر الطلب.</value>
+  </data>
+  <data name="OrderDeleteInvalid" xml:space="preserve">
+    <value>يمكن حذف الطلبات الملغاة فقط.</value>
+  </data>
+  <data name="OrderStatus_New" xml:space="preserve">
+    <value>جديد</value>
+  </data>
+  <data name="OrderStatus_Paid" xml:space="preserve">
+    <value>مدفوع</value>
+  </data>
+  <data name="OrderStatus_Shipped" xml:space="preserve">
+    <value>تم الشحن</value>
+  </data>
+  <data name="OrderStatus_Cancelled" xml:space="preserve">
+    <value>ملغى</value>
+  </data>
+  <data name="CustomerType_Regular" xml:space="preserve">
+    <value>عادي</value>
+  </data>
+  <data name="CustomerType_Employee" xml:space="preserve">
+    <value>موظف</value>
+  </data>
+  <data name="CustomerType_VIP" xml:space="preserve">
+    <value>VIP</value>
+  </data>
+  <data name="CustomerType_WholeSale" xml:space="preserve">
+    <value>جملة</value>
   </data>
 </root>
 

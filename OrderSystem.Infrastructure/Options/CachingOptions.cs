@@ -4,5 +4,6 @@ namespace OrderSystem.Infrastructure.Options
     {
         public int DefaultExpirationMinutes { get; set; }
         public int SlidingExpirationMinutes { get; set; }
+        public int VersionExpirationDays { get; set; }
     }
 }

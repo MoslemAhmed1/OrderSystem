@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace OrderSystem.Application.DTOs.Auth
 {
-    public class RefreshTokenRequest
+    public record RefreshTokenRequest
     {
         [Required]
-        public required string RefreshToken { get; set; }
+        public required string RefreshToken { get; init; }
     }
 }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 
 using OrderSystem.Common;
 using OrderSystem.Mappings;
@@ -8,6 +9,7 @@ using OrderSystem.ViewModels.Auth;
 
 using OrderSystem.Application.DTOs.Auth;
 using OrderSystem.Application.Interfaces.Services;
+using OrderSystem.Infrastructure.Options;
 
 namespace OrderSystem.Controllers
 {
@@ -16,10 +18,14 @@ namespace OrderSystem.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ITranslationService _translationService;
+        private readonly JwtOptions _jwtOptions;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ITranslationService translationService, IOptions<JwtOptions> jwtOptions)
         {
             _authService = authService;
+            _translationService = translationService;
+            _jwtOptions = jwtOptions.Value;
         }
 
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -33,7 +39,7 @@ namespace OrderSystem.Controllers
             SetRefreshCookie(result.RefreshToken);
 
             return StatusCode(StatusCodes.Status201Created,
-                ApiResponse<AuthViewModel>.Success(result.ToViewModel(), "User registered successfully.", StatusCodes.Status201Created));
+                ApiResponse<AuthViewModel>.Success(result.ToViewModel(), _translationService.Translate("UserRegistered"), StatusCodes.Status201Created));
         }
 
         [HttpPost("login")]
@@ -44,7 +50,7 @@ namespace OrderSystem.Controllers
 
             SetRefreshCookie(result.RefreshToken);
 
-            return Ok(ApiResponse<AuthViewModel>.Success(result.ToViewModel(), "User logged in successfully."));
+            return Ok(ApiResponse<AuthViewModel>.Success(result.ToViewModel(), _translationService.Translate("UserLoggedIn")));
         }
 
         [HttpPost("refresh")]
@@ -52,13 +58,13 @@ namespace OrderSystem.Controllers
         {
             var refreshToken = Request.Cookies["refreshToken"];
             if (string.IsNullOrEmpty(refreshToken))
-                return Unauthorized(ApiResponse.Fail("Refresh token is missing.", StatusCodes.Status401Unauthorized));
+                return Unauthorized(ApiResponse.Fail(_translationService.Translate("RefreshTokenMissing"), StatusCodes.Status401Unauthorized));
 
             var result = await _authService.RefreshTokenAsync(new RefreshTokenRequest { RefreshToken = refreshToken });
 
             SetRefreshCookie(result.RefreshToken);
 
-            return Ok(ApiResponse<AuthViewModel>.Success(result.ToViewModel(), "Token refreshed successfully."));
+            return Ok(ApiResponse<AuthViewModel>.Success(result.ToViewModel(), _translationService.Translate("TokenRefreshed")));
         }
 
         [HttpPost("logout")]
@@ -70,7 +76,25 @@ namespace OrderSystem.Controllers
                 await _authService.RevokeTokenAsync(refreshToken, GetUserId());
 
             Response.Cookies.Delete("refreshToken");
-            return Ok(ApiResponse.Success("User logged out successfully."));
+            return Ok(ApiResponse.Success(_translationService.Translate("UserLoggedOut")));
+        }
+
+        [HttpPost("logout-all")]
+        [Authorize]
+        public async Task<IActionResult> LogoutAll()
+        {
+            await _authService.LogoutAllAsync(GetUserId());
+            Response.Cookies.Delete("refreshToken");
+            return Ok(ApiResponse.Success(_translationService.Translate("UserLoggedOutAll")));
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel request)
+        {
+            await _authService.ChangePasswordAsync(request.ToDto(), GetUserId());
+            Response.Cookies.Delete("refreshToken");
+            return Ok(ApiResponse.Success(_translationService.Translate("PasswordChanged")));
         }
 
         private void SetRefreshCookie(string token)
@@ -80,7 +104,7 @@ namespace OrderSystem.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
+                Expires = DateTimeOffset.UtcNow.AddDays(_jwtOptions.RefreshTokenExpirationDays)
             });
         }
 

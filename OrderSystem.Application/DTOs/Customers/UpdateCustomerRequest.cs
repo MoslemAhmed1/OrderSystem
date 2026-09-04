@@ -3,16 +3,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OrderSystem.Application.DTOs.Customers
 {
-    public class UpdateCustomerRequest
+    public record UpdateCustomerRequest
     {
         [Required]
         [StringLength(50)] 
-        public required string FirstName { get; set; }
+        public required string FirstName { get; init; }
         
         [Required]
         [StringLength(50)] 
-        public required string LastName { get; set; }
+        public required string LastName { get; init; }
         
-        public CustomerType CustomerType { get; set; }
+        public CustomerType CustomerType { get; init; }
     }
 }

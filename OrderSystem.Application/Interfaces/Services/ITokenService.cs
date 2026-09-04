@@ -1,13 +1,15 @@
 using OrderSystem.Domain.Entities;
+using OrderSystem.Application.DTOs.Auth;
 
 namespace OrderSystem.Application.Interfaces.Services
 {
     public interface ITokenService
     {
-        string GenerateAccessToken(User user);
+        string GenerateAccessToken(User user, DateTime expiresAt);
         string GenerateRefreshToken();
-        string HashToken(string token);
         DateTime GetAccessTokenExpiry();
         DateTime GetRefreshTokenExpiry();
+        Task<AuthResponse> IssueTokensAsync(User user, string deviceInfo);
     }
 }
+

@@ -1,7 +1,7 @@
 namespace OrderSystem.ViewModels.Orders
 {
-    public class UpdateOrderItemsViewModel
+    public record UpdateOrderItemsViewModel
     {
-        public List<CreateOrderItemViewModel> Items { get; set; } = new List<CreateOrderItemViewModel>();
+        public List<CreateOrderItemViewModel> Items { get; init; } = new List<CreateOrderItemViewModel>();
     }
 }

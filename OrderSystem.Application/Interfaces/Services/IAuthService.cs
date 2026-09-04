@@ -8,5 +8,7 @@ namespace OrderSystem.Application.Interfaces.Services
         Task<AuthResponse> LoginAsync(LoginRequest request);
         Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request);
         Task RevokeTokenAsync(string refreshToken, int userId);
+        Task LogoutAllAsync(int userId);
+        Task ChangePasswordAsync(ChangePasswordRequest request, int userId);
     }
 }

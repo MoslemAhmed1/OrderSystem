@@ -16,7 +16,7 @@ namespace OrderSystem.Infrastructure.Services
         private readonly TimeSpan _slidingExpiration;
         private readonly ILogger<RedisCacheService> _logger;
 
-        public RedisCacheService(IDistributedCache distributedCache, IOptions<CachingOptions> cachingOptions, ILogger<RedisCacheService> logger) // TODO: IOptionsMonitor ??
+        public RedisCacheService(IDistributedCache distributedCache, IOptions<CachingOptions> cachingOptions, ILogger<RedisCacheService> logger)
         {
             _distributedCache = distributedCache;
             _defaultExpiration = TimeSpan.FromMinutes(cachingOptions.Value.DefaultExpirationMinutes);

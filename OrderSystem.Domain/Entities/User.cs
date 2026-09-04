@@ -17,5 +17,7 @@ namespace OrderSystem.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+        public Customer? Customer { get; set; }
     }
 }

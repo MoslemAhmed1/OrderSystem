@@ -1,13 +1,13 @@
-﻿namespace OrderSystem.ViewModels.Orders
+namespace OrderSystem.ViewModels.Orders
 {
-    public class OrderViewModel
+    public record OrderViewModel
     {
-        public int Id { get; set; }
-        public string CustomerName { get; set; } = string.Empty;
-        public string CustomerType { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public decimal Total { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public List<OrderItemViewModel> Items { get; set; } = new();
+        public int Id { get; init; }
+        public string CustomerName { get; init; } = string.Empty;
+        public string CustomerType { get; init; } = string.Empty;
+        public string Status { get; init; } = string.Empty;
+        public decimal Total { get; init; }
+        public DateTime CreatedAt { get; init; }
+        public List<OrderItemViewModel> Items { get; init; } = new();
     }
 }

@@ -1,6 +1,7 @@
 using OrderSystem.Domain.Enums;
 using OrderSystem.Domain.Entities;
 
+using OrderSystem.Application;
 using OrderSystem.Application.Mappings;
 using OrderSystem.Application.DTOs.Orders;
 using OrderSystem.Application.Interfaces.Services;
@@ -17,7 +18,6 @@ namespace OrderSystem.Infrastructure.Services
         private readonly IDiscountPolicy _discountPolicy;
         private readonly ITranslationService _translation;
         private readonly ICacheVersioningService _cacheVersioning;
-        private const string versionKey = "products:version"; // TODO: move to configuration
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -65,7 +65,7 @@ namespace OrderSystem.Infrastructure.Services
             {
                 var customer = await _customerRepository.GetByUserIdAsync(userId);
                 if(customer is null)
-                    throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", userId));
+                    throw new KeyNotFoundException(_translation.Translate("CustomerNotFound"));
 
                 orders = await _orderRepository.GetAllByCustomerIdAsync(customer.Id);
             }
@@ -82,10 +82,11 @@ namespace OrderSystem.Infrastructure.Services
             if (customer is null)
                 throw new KeyNotFoundException(_translation.Translate("CustomerNotFound", userId));
 
-            var (items, affectedProductIds) = await BuildItems(request.Items);
+            var items = await BuildItems(request.Items);
             var order = new Order
             {
                 CustomerId = customer.Id,
+                Customer = customer,
                 Status = OrderStatus.New,
                 Items = items
             };
@@ -93,15 +94,11 @@ namespace OrderSystem.Infrastructure.Services
             order.Total = CalculateTotal(items, customer.CustomerType);
 
             await _orderRepository.AddAsync(order);
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             await InvalidateProductCacheAsync();
-            
-            var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
-            if (savedOrder is null)
-                throw new InvalidOperationException(_translation.Translate("OrderCreationFailed", order.Id));
-            
-            return savedOrder.ToDto();
+
+            return order.ToDto();
         }
 
         public async Task<OrderResponse> UpdateStatusAsync(int id, OrderStatus newStatus, int userId, bool isAdmin)
@@ -117,7 +114,7 @@ namespace OrderSystem.Infrastructure.Services
                 throw new InvalidOperationException(_translation.Translate("OrderStatusTransitionInvalid", order.Status, newStatus));
 
             order.Status = newStatus;
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             return order.ToDto();
         }
@@ -137,16 +134,16 @@ namespace OrderSystem.Infrastructure.Services
             if (order.Status != OrderStatus.New)
                 throw new InvalidOperationException(_translation.Translate("OrderItemsCannotUpdate"));
 
-            var oldProductIds = await RestockItems(order.Items);
+            await RestockItems(order.Items);
 
-            var (items, newProductIds) = await BuildItems(newItems);
+            var items = await BuildItems(newItems);
             order.Items.Clear();
             foreach (var item in items)
                 order.Items.Add(item);
 
             order.Total = CalculateTotal(items, order.Customer.CustomerType);
 
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             await InvalidateProductCacheAsync();
 
@@ -166,9 +163,9 @@ namespace OrderSystem.Infrastructure.Services
                 throw new InvalidOperationException(_translation.Translate("OrderCancelInvalid", order.Status));
             
             order.Status = OrderStatus.Cancelled;
-            var affectedProductIds = await RestockItems(order.Items);
+            await RestockItems(order.Items);
 
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             await InvalidateProductCacheAsync();
         }
@@ -180,13 +177,13 @@ namespace OrderSystem.Infrastructure.Services
                 throw new KeyNotFoundException(_translation.Translate("OrderNotFound", id));
 
             if (order.Status != OrderStatus.Cancelled)
-                throw new InvalidOperationException("Only cancelled orders can be soft deleted.");
+                throw new InvalidOperationException(_translation.Translate("OrderDeleteInvalid"));
 
             order.IsDeleted = true;
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
         }
 
-        private async Task<(List<OrderItem> Items, List<int> AffectedProductIds)> BuildItems(List<CreateOrderItemRequest> items)
+        private async Task<List<OrderItem>> BuildItems(List<CreateOrderItemRequest> items)
         {
             var orderItems = new List<OrderItem>();
             var productIds = items.Select(i => i.ProductId).Distinct().ToList();
@@ -212,10 +209,10 @@ namespace OrderSystem.Infrastructure.Services
                 orderItems.Add(orderItem);
             }
             
-            return (orderItems, productIds);
+            return orderItems;
         }
 
-        private async Task<List<int>> RestockItems(ICollection<OrderItem> items)
+        private async Task RestockItems(ICollection<OrderItem> items)
         {
             var productIds = items.Select(i => i.ProductId).Distinct().ToList();
             var products = await _productRepository.GetByIdsAsync(productIds);
@@ -226,13 +223,11 @@ namespace OrderSystem.Infrastructure.Services
                 if (product is not null)
                     product.StockQuantity += item.Qty;
             }
-
-            return productIds;
         }
 
         private async Task InvalidateProductCacheAsync()
         {
-            await _cacheVersioning.UpdateVersionAsync(versionKey);
+            await _cacheVersioning.UpdateVersionAsync(CacheKeys.ProductsVersion);
         }
 
         private decimal CalculateTotal(List<OrderItem> items, CustomerType customerType)

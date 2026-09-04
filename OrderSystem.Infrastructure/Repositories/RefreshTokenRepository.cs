@@ -29,12 +29,12 @@ namespace OrderSystem.Infrastructure.Repositories
                 .FirstOrDefaultAsync(rt => rt.UserId == userId && rt.DeviceInfo == deviceInfo && rt.RevokedAt == null && rt.ExpiresAt > now);
         }
 
-        public async Task CreateAsync(RefreshToken token)
+        public async Task AddAsync(RefreshToken token)
         {
             await _orderContext.RefreshTokens.AddAsync(token);
         }
 
-        public async Task<int> RevokeAllForUserAsync(int userId)
+        public async Task RevokeAllForUserAsync(int userId)
         {
             var tokens = await _orderContext.RefreshTokens
                 .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
@@ -44,8 +44,18 @@ namespace OrderSystem.Infrastructure.Repositories
             {
                 token.RevokedAt = DateTime.UtcNow;
             }
+        }
 
-            return tokens.Count;
+        public async Task RevokeByUserAndDeviceAsync(int userId, string deviceInfo)
+        {
+            var tokens = await _orderContext.RefreshTokens
+                .Where(rt => rt.UserId == userId && rt.DeviceInfo == deviceInfo && rt.RevokedAt == null)
+                .ToListAsync();
+
+            foreach (var token in tokens)
+            {
+                token.RevokedAt = DateTime.UtcNow;
+            }
         }
 
         public async Task<int> DeleteExpiredAndRevokedAsync()

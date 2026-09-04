@@ -19,7 +19,7 @@ namespace OrderSystem.Application.Mappings
                 Items = order.Items.Select(item => new OrderItemResponse
                 {
                     Id = item.Id,
-                    ProductName = item.Product.Name,
+                    ProductName = item.Product.ResolveName(),
                     Qty = item.Qty,
                     UnitPrice = item.UnitPrice
                 }).ToList()

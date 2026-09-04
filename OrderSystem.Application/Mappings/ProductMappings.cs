@@ -1,5 +1,6 @@
-﻿using OrderSystem.Domain.Entities;
-using OrderSystem.Application.DTOs.Products;
+﻿using OrderSystem.Application.DTOs.Products;
+using OrderSystem.Domain.Entities;
+using System.Globalization;
 
 namespace OrderSystem.Application.Mappings
 {
@@ -11,10 +12,18 @@ namespace OrderSystem.Application.Mappings
             return new ProductResponse
             {
                 Id = product.Id,
-                Name = product.Name,
+                Name = product.ResolveName(),
                 Price = product.Price,
                 StockQuantity = product.StockQuantity
             };
+        }
+
+        public static string ResolveName(this Product product)
+        {
+            var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+            var translation = product.Translations?.FirstOrDefault(t => t.Culture == culture);
+            return translation?.Name ?? product.Name; // fallback
         }
 
         // Dto -> Entity

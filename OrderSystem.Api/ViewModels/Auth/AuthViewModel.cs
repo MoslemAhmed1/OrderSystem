@@ -1,8 +1,8 @@
 namespace OrderSystem.ViewModels.Auth
 {
-    public class AuthViewModel
+    public record AuthViewModel
     {
-        public string AccessToken { get; set; } = string.Empty;
-        public DateTime AccessTokenExpiresAt { get; set; }
+        public string AccessToken { get; init; } = string.Empty;
+        public DateTime AccessTokenExpiresAt { get; init; }
     }
 }

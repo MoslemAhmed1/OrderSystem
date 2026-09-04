@@ -1,16 +1,16 @@
 using Microsoft.Extensions.Localization;
 using OrderSystem.Application.Interfaces.Services;
+using OrderSystem.Infrastructure.Resources;
 
 namespace OrderSystem.Infrastructure.Services
 {
     public class TranslationService : ITranslationService
     {
-        private readonly IStringLocalizer _localizer;
+        private readonly IStringLocalizer<Messages> _localizer;
 
-        public TranslationService(IStringLocalizerFactory factory)
+        public TranslationService(IStringLocalizer<Messages> localizer)
         {
-            var assemblyName = typeof(TranslationService).Assembly.FullName ?? string.Empty;
-            _localizer = factory.Create("Resources.Messages", assemblyName);
+            _localizer = localizer;
         }
 
         public string Translate(string key)

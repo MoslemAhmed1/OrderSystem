@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using OrderSystem.Common;
 using OrderSystem.Mappings;
 using OrderSystem.ViewModels.Orders;
+using OrderSystem.Domain.Enums;
 
 using OrderSystem.Application.Interfaces.Services;
 
@@ -16,28 +17,30 @@ namespace OrderSystem.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly ITranslationService _translationService;
 
-        public OrdersController(IOrderService orderService)
+        public OrdersController(IOrderService orderService, ITranslationService translationService)
         {
             _orderService = orderService;
+            _translationService = translationService;
         }
 
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        private bool IsAdmin() => User.IsInRole("Admin");
+        private bool IsAdmin() => User.IsInRole(nameof(UserRole.Admin));
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var order = await _orderService.GetByIdAsync(id, GetUserId(), IsAdmin());
-            return Ok(ApiResponse<OrderViewModel>.Success(order.ToViewModel()));
+            return Ok(ApiResponse<OrderViewModel>.Success(order.ToViewModel(_translationService)));
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var orders = await _orderService.GetAllAsync(GetUserId(), IsAdmin());
-            var result = orders.Select(o => o.ToViewModel()).ToList();
+            var result = orders.Select(o => o.ToViewModel(_translationService)).ToList();
             return Ok(ApiResponse<List<OrderViewModel>>.Success(result));
         }
 
@@ -45,14 +48,14 @@ namespace OrderSystem.Controllers
         public async Task<IActionResult> Create(CreateOrderViewModel request)
         {
             var order = await _orderService.CreateOrderAsync(request.ToDto(), GetUserId());
-            return CreatedAtAction(nameof(GetById), new { id = order.Id }, ApiResponse<OrderViewModel>.Success(order.ToViewModel(), "Order created successfully.", StatusCodes.Status201Created));
+            return CreatedAtAction(nameof(GetById), new { id = order.Id }, ApiResponse<OrderViewModel>.Success(order.ToViewModel(_translationService), _translationService.Translate("OrderCreated"), StatusCodes.Status201Created));
         }
 
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusViewModel request)
         {
             var order = await _orderService.UpdateStatusAsync(id, request.OrderStatus, GetUserId(), IsAdmin());
-            return Ok(ApiResponse<OrderViewModel>.Success(order.ToViewModel(), "Order status updated."));
+            return Ok(ApiResponse<OrderViewModel>.Success(order.ToViewModel(_translationService), _translationService.Translate("OrderStatusUpdated")));
         }
 
         [HttpPatch("{id}/items")]
@@ -60,7 +63,7 @@ namespace OrderSystem.Controllers
         {
             var requestItems = request.Items.Select(i => i.ToDto()).ToList();
             var order = await _orderService.UpdateItemsAsync(id, requestItems, GetUserId(), IsAdmin());
-            return Ok(ApiResponse<OrderViewModel>.Success(order.ToViewModel(), "Order items updated."));
+            return Ok(ApiResponse<OrderViewModel>.Success(order.ToViewModel(_translationService), _translationService.Translate("OrderItemsUpdated")));
         }
 
         [HttpPost("{id}/cancel")]
@@ -71,7 +74,7 @@ namespace OrderSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> Delete(int id)
         {
             await _orderService.DeleteAsync(id);

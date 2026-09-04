@@ -17,8 +17,9 @@ namespace OrderSystem.Infrastructure.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly IUnitOfWork _uow;
         private readonly ITokenService _tokenService;
+        private readonly ITokenHasher _tokenHasher;
         private readonly ITranslationService _translation;
-        private readonly PasswordHasher<User> _passwordHasher = new PasswordHasher<User>();
+        private readonly IPasswordHasher<User> _passwordHasher;
 
         public AuthService(
             IUserRepository userRepository,
@@ -26,17 +27,21 @@ namespace OrderSystem.Infrastructure.Services
             ICustomerRepository customerRepository,
             IUnitOfWork uow,
             ITokenService tokenService,
-            ITranslationService translation)
+            ITokenHasher tokenHasher,
+            ITranslationService translation,
+            IPasswordHasher<User> passwordHasher)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _customerRepository = customerRepository;
             _uow = uow;
             _tokenService = tokenService;
+            _tokenHasher = tokenHasher;
             _translation = translation;
+            _passwordHasher = passwordHasher;
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest request) // TODO: should be transaction
+        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
         {
             var (usernameExists, emailExists) = await _userRepository.CheckUserExistsAsync(request.Username, request.Email);
             if (usernameExists)
@@ -44,30 +49,37 @@ namespace OrderSystem.Infrastructure.Services
             if (emailExists)
                 throw new InvalidOperationException(_translation.Translate("EmailExists"));
 
-            var user = new User
+            await _uow.BeginTransactionAsync();
+            try
             {
-                //UserId = 0, // TODO: explicitly set user entity as Added, and not Modified
-                Username = request.Username,
-                Email = request.Email,
-                PasswordHash = "",
-            };
-            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-            await _userRepository.CreateAsync(user);
-            await _uow.CommitAsync();
+                var user = new User
+                {
+                    Username = request.Username,
+                    Email = request.Email,
+                    PasswordHash = "",
+                };
+                user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+                await _userRepository.AddAsync(user);
 
-            var customer = new Customer
+                var customer = new Customer
+                {
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    CustomerType = CustomerType.Regular,
+                    User = user
+                };
+                await _customerRepository.AddAsync(customer);
+
+                var response = await _tokenService.IssueTokensAsync(user, request.DeviceInfo);
+                await _uow.CommitTransactionAsync();
+
+                return response;
+            }
+            catch
             {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                CustomerType = CustomerType.Regular,
-                UserId = user.Id
-            };
-            await _customerRepository.AddAsync(customer);
-
-            var response = await IssueTokensAsync(user, request.DeviceInfo);
-            await _uow.CommitAsync();
-            
-            return response;
+                await _uow.RollbackTransactionAsync();
+                throw;
+            }
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -85,24 +97,24 @@ namespace OrderSystem.Infrastructure.Services
                 user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
             }
 
-            var response = await IssueTokensAsync(user, request.DeviceInfo);
-            await _uow.CommitAsync();
+            var response = await _tokenService.IssueTokensAsync(user, request.DeviceInfo);
+            await _uow.SaveChangesAsync();
 
             return response;
         }
 
         public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)
         {
-            var hashedToken = _tokenService.HashToken(request.RefreshToken);
+            var hashedToken = _tokenHasher.Hash(request.RefreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
-            
+
             if (storedToken is null)
                 throw new AuthenticationException(_translation.Translate("InvalidRefreshToken"));
 
-            if (storedToken.RevokedAt != null)
+            if (storedToken.RevokedAt != null) // Token reuse, revoke all
             {
                 await _refreshTokenRepository.RevokeAllForUserAsync(storedToken.UserId);
-                await _uow.CommitAsync();
+                await _uow.SaveChangesAsync();
                 throw new AuthenticationException(_translation.Translate("TokenReuseDetected"));
             }
 
@@ -110,56 +122,48 @@ namespace OrderSystem.Infrastructure.Services
                 throw new AuthenticationException(_translation.Translate("RefreshTokenExpired"));
 
             storedToken.RevokedAt = DateTime.UtcNow;
-            
-            var response = await IssueTokensAsync(storedToken.User, storedToken.DeviceInfo);
-            storedToken.ReplacedByTokenHash = _tokenService.HashToken(response.RefreshToken);
-            
-            await _uow.CommitAsync();
+
+            var response = await _tokenService.IssueTokensAsync(storedToken.User, storedToken.DeviceInfo);
+
+            await _uow.SaveChangesAsync();
 
             return response;
         }
 
-        public async Task RevokeTokenAsync(string refreshToken, int userId) 
+        public async Task RevokeTokenAsync(string refreshToken, int userId)
         {
-            var hashedToken = _tokenService.HashToken(refreshToken);
+            var hashedToken = _tokenHasher.Hash(refreshToken);
             var storedToken = await _refreshTokenRepository.GetByTokenAsync(hashedToken);
-            
+
             if (storedToken is null || storedToken.RevokedAt != null || storedToken.UserId != userId)
                 return;
 
-            storedToken.RevokedAt = DateTime.UtcNow;
-            await _uow.CommitAsync();
+            await _refreshTokenRepository.RevokeByUserAndDeviceAsync(userId, storedToken.DeviceInfo);
+            await _uow.SaveChangesAsync();
         }
 
-        private async Task<AuthResponse> IssueTokensAsync(User user, string deviceInfo)
+        public async Task LogoutAllAsync(int userId)
         {
-            var activeToken = await _refreshTokenRepository.GetActiveTokenByUserAndDeviceAsync(user.Id, deviceInfo);
-            if (activeToken != null)
-            {
-                activeToken.RevokedAt = DateTime.UtcNow;
-            }
+            await _refreshTokenRepository.RevokeAllForUserAsync(userId);
+            await _uow.SaveChangesAsync();
+        }
 
-            var accessToken = _tokenService.GenerateAccessToken(user);
-            var refreshTokenString = _tokenService.GenerateRefreshToken();
-            
-            var refreshToken = new RefreshToken
-            {
-                TokenHash = _tokenService.HashToken(refreshTokenString),
-                UserId = user.Id,
-                DeviceInfo = deviceInfo,
-                ExpiresAt = _tokenService.GetRefreshTokenExpiry(),
-                CreatedAt = DateTime.UtcNow
-            };
+        public async Task ChangePasswordAsync(ChangePasswordRequest request, int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user is null)
+                throw new KeyNotFoundException(_translation.Translate("UserNotFound"));
 
-            await _refreshTokenRepository.CreateAsync(refreshToken);
-            await _uow.CommitAsync();
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword);
+            if (result == PasswordVerificationResult.Failed)
+                throw new AuthenticationException(_translation.Translate("InvalidCredentials"));
 
-            return new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshTokenString,
-                AccessTokenExpiresAt = _tokenService.GetAccessTokenExpiry()
-            };
+            user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
+            _userRepository.Update(user);
+
+            await _refreshTokenRepository.RevokeAllForUserAsync(userId);
+
+            await _uow.SaveChangesAsync();
         }
     }
 }

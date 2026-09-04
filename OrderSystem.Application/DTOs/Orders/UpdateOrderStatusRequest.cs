@@ -2,8 +2,8 @@ using OrderSystem.Domain.Enums;
 
 namespace OrderSystem.Application.DTOs.Orders
 {
-    public class UpdateOrderStatusRequest
+    public record UpdateOrderStatusRequest
     {
-        public OrderStatus OrderStatus { get; set; }
+        public OrderStatus OrderStatus { get; init; }
     }
 }

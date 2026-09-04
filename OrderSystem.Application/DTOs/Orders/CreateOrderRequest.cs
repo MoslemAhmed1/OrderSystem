@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OrderSystem.Application.DTOs.Orders
 {
-    public class CreateOrderRequest
+    public record CreateOrderRequest
     {
-        public List<CreateOrderItemRequest> Items { get; set; } = new();
+        public List<CreateOrderItemRequest> Items { get; init; } = new();
     }
 }

@@ -1,10 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using OrderSystem.Api.ViewModels.Products;
+using OrderSystem.Application.Interfaces.Services;
 using OrderSystem.Common;
 using OrderSystem.Domain;
+using OrderSystem.Domain.Enums;
 using OrderSystem.Mappings;
 using OrderSystem.ViewModels.Products;
-using OrderSystem.Application.Interfaces.Services;
 
 namespace OrderSystem.Controllers
 {
@@ -37,7 +39,7 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> Create(CreateProductViewModel request)
         {
             var product = await _productService.CreateAsync(request.ToDto());
@@ -45,15 +47,24 @@ namespace OrderSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> Update(int id, UpdateProductViewModel request)
         {
             var product = await _productService.UpdateAsync(id, request.ToDto());
             return Ok(ApiResponse<ProductViewModel>.Success(product.ToViewModel(), _translationService.Translate("ProductUpdated")));
         }
 
+        [HttpPut("{id}/translations")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<IActionResult> SetTranslation(int id, ProductTranslationViewModel viewModel)
+        {
+            var request = viewModel.ToDto();
+            var product = await _productService.SetTranslationAsync(id, request);
+            return Ok(ApiResponse<ProductViewModel>.Success(product.ToViewModel(), _translationService.Translate("TranslationUpdated")));
+        }
+
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _productService.DeleteAsync(id);

@@ -1,11 +1,11 @@
-﻿namespace OrderSystem.ViewModels.Orders
+namespace OrderSystem.ViewModels.Orders
 {
-    public class OrderItemViewModel
+    public record OrderItemViewModel
     {
-        public int Id { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public int Qty { get; set; }
-        public decimal UnitPrice { get; set; }
+        public int Id { get; init; }
+        public string ProductName { get; init; } = string.Empty;
+        public int Qty { get; init; }
+        public decimal UnitPrice { get; init; }
         public decimal LineTotal => UnitPrice * Qty;
     }
 }

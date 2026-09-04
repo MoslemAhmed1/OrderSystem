@@ -14,7 +14,6 @@ public class RefreshToken
     public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? RevokedAt { get; set; }
-    public string? ReplacedByTokenHash { get; set; }
 
     public bool IsExpired => ExpiresAt <= DateTime.UtcNow;
     public bool IsRevoked => RevokedAt != null;

@@ -19,7 +19,8 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             return await _orderContext.Orders
                 .Include(o => o.Customer)
-                .Include(o => o.Items).ThenInclude(i => i.Product)
+                .Include(o => o.Items).ThenInclude(i => i.Product).ThenInclude(p => p.Translations)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
@@ -28,7 +29,8 @@ namespace OrderSystem.Infrastructure.Repositories
             return await _orderContext.Orders
                 .AsNoTracking()
                 .Include(o => o.Customer)
-                .Include(o => o.Items).ThenInclude(i => i.Product)
+                .Include(o => o.Items).ThenInclude(i => i.Product).ThenInclude(p => p.Translations)
+                .AsSplitQuery()
                 .ToListAsync();
         }
 
@@ -37,7 +39,8 @@ namespace OrderSystem.Infrastructure.Repositories
             return await _orderContext.Orders
                 .AsNoTracking()
                 .Include(o => o.Customer)
-                .Include(o => o.Items).ThenInclude(i => i.Product)
+                .Include(o => o.Items).ThenInclude(i => i.Product).ThenInclude(p => p.Translations)
+                .AsSplitQuery()
                 .Where(o => o.CustomerId == customerId)
                 .ToListAsync();
         }

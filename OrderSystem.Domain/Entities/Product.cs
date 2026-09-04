@@ -9,5 +9,7 @@ namespace OrderSystem.Domain.Entities
         public decimal Price { get; set; }
 
         public int StockQuantity { get; set; } = 0;
+
+        public ICollection<ProductTranslation> Translations { get; set; } = new List<ProductTranslation>();
     }
 }

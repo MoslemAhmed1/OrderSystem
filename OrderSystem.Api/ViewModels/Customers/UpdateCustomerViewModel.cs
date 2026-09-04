@@ -1,19 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using OrderSystem.Domain.Enums;
 
 namespace OrderSystem.ViewModels.Customers
 {
-    public class UpdateCustomerViewModel
+    public record UpdateCustomerViewModel
     {
         [Required]
         [StringLength(50)]
-        public required string FirstName { get; set; }
+        public required string FirstName { get; init; }
 
         [Required]
         [StringLength(50)]
-        public required string LastName { get; set; }
+        public required string LastName { get; init; }
 
         [Required]
-        public CustomerType CustomerType { get; set; }
+        public CustomerType CustomerType { get; init; }
     }
 }

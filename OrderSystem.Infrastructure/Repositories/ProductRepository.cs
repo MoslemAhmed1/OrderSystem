@@ -43,5 +43,27 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             return await _orderContext.OrderItems.AnyAsync(oi => oi.ProductId == id);
         }
+
+        // Translations
+        public async Task<Product?> GetByIdWithTranslationsAsync(int id)
+        {
+            return await _orderContext.Products.Include(p => p.Translations).FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<List<Product>> GetAllWithTranslationsAsync()
+        {
+            return await _orderContext.Products.AsNoTracking().Include(p => p.Translations).ToListAsync();
+        }
+
+        public async Task AddTranslationAsync(ProductTranslation translation)
+        {
+            await _orderContext.ProductTranslations.AddAsync(translation);
+        }
+
+        public async Task<ProductTranslation?> GetTranslationAsync(int productId, string culture)
+        {
+            //return await _orderContext.ProductTranslations.FirstOrDefaultAsync(t => t.ProductId == productId && t.Culture == culture);
+            return await _orderContext.ProductTranslations.FindAsync(productId, culture);
+        }
     }
 }

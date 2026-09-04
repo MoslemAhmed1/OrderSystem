@@ -11,5 +11,11 @@ namespace OrderSystem.Application.Interfaces.Repositories
         void Update(Product product);
         void Delete(Product product);
         Task<bool> IsUsedInOrdersAsync(int id);
+
+        // Translations
+        Task<Product?> GetByIdWithTranslationsAsync(int id);
+        Task<List<Product>> GetAllWithTranslationsAsync();
+        Task AddTranslationAsync(ProductTranslation translation);
+        Task<ProductTranslation?> GetTranslationAsync(int productId, string culture);
     }
 }

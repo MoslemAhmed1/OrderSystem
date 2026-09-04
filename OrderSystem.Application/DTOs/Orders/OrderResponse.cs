@@ -1,13 +1,13 @@
-﻿namespace OrderSystem.Application.DTOs.Orders
+namespace OrderSystem.Application.DTOs.Orders
 {
-    public class OrderResponse
+    public record OrderResponse
     {
-        public int Id { get; set; }
-        public string CustomerName { get; set; } = string.Empty;
-        public string CustomerType { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public decimal Total { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public List<OrderItemResponse> Items { get; set; } = new();
+        public int Id { get; init; }
+        public string CustomerName { get; init; } = string.Empty;
+        public string CustomerType { get; init; } = string.Empty;
+        public string Status { get; init; } = string.Empty;
+        public decimal Total { get; init; }
+        public DateTime CreatedAt { get; init; }
+        public List<OrderItemResponse> Items { get; init; } = new();
     }
 }

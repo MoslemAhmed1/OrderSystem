@@ -11,6 +11,7 @@ namespace OrderSystem.Infrastructure.Context
         public DbSet<Customer> Customers { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductTranslation> ProductTranslations { get; set; }
 
         public OrderContext(DbContextOptions<OrderContext> options) : base(options) { }
 
@@ -37,7 +38,7 @@ namespace OrderSystem.Infrastructure.Context
             // User -> Customer: One-to-One
             modelBuilder.Entity<Customer>()
                 .HasOne(c => c.User)
-                .WithOne()
+                .WithOne(u => u.Customer)
                 .HasForeignKey<Customer>(c => c.UserId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
@@ -49,6 +50,21 @@ namespace OrderSystem.Infrastructure.Context
                 .HasMaxLength(100);
 
             modelBuilder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+
+            // ProductTranslation
+            modelBuilder.Entity<ProductTranslation>()
+                .HasOne(pt => pt.Product)
+                .WithMany(p => p.Translations)
+                .HasForeignKey(pt => pt.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductTranslation>()
+                .HasKey(pt => new { pt.ProductId, pt.Culture });
+
+            modelBuilder.Entity<ProductTranslation>()
+                .Property(p => p.Name)
+                .IsRequired()
+                .HasMaxLength(100);
 
             // OrderItem
             modelBuilder.Entity<OrderItem>().Property(i => i.UnitPrice).HasPrecision(18, 2);

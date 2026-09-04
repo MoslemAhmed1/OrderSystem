@@ -26,7 +26,7 @@ namespace OrderSystem.Infrastructure.Repositories
                 .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
         }
 
-        public async Task CreateAsync(User user)
+        public async Task AddAsync(User user)
         {
             await _orderContext.Users.AddAsync(user);
         }

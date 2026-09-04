@@ -6,8 +6,9 @@ namespace OrderSystem.Application.Interfaces.Repositories
     {
         Task<RefreshToken?> GetByTokenAsync(string tokenHash);
         Task<RefreshToken?> GetActiveTokenByUserAndDeviceAsync(int userId, string deviceInfo);
-        Task CreateAsync(RefreshToken token);
-        Task<int> RevokeAllForUserAsync(int userId);
+        Task AddAsync(RefreshToken token);
+        Task RevokeAllForUserAsync(int userId);
+        Task RevokeByUserAndDeviceAsync(int userId, string deviceInfo);
         Task<int> DeleteExpiredAndRevokedAsync();
     }
 }

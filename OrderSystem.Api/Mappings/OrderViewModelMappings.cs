@@ -1,4 +1,5 @@
 using OrderSystem.Application.DTOs.Orders;
+using OrderSystem.Application.Interfaces.Services;
 using OrderSystem.ViewModels.Orders;
 
 namespace OrderSystem.Mappings
@@ -33,14 +34,14 @@ namespace OrderSystem.Mappings
             };
         }
 
-        public static OrderViewModel ToViewModel(this OrderResponse dto)
+        public static OrderViewModel ToViewModel(this OrderResponse dto, ITranslationService translationService)
         {
             return new OrderViewModel
             {
                 Id = dto.Id,
                 CustomerName = dto.CustomerName,
-                CustomerType = dto.CustomerType,
-                Status = dto.Status,
+                CustomerType = translationService.Translate($"CustomerType_{dto.CustomerType}"),
+                Status = translationService.Translate($"OrderStatus_{dto.Status}"),
                 Total = dto.Total,
                 CreatedAt = dto.CreatedAt,
                 Items = dto.Items.Select(i => i.ToViewModel()).ToList()

@@ -36,16 +36,6 @@ namespace OrderSystem.Infrastructure.Services
             return customers.Select(customer => customer.ToDto()).ToList();
         }
 
-        public async Task<CustomerResponse> CreateAsync(CreateCustomerRequest request)
-        {
-            var customer = request.ToEntity();
-
-            await _customerRepository.AddAsync(customer);
-            await _uow.CommitAsync();
-
-            return customer.ToDto();
-        }
-
         public async Task<CustomerResponse> UpdateAsync(int id, UpdateCustomerRequest request)
         {
             var customer = await _customerRepository.GetByIdAsync(id);
@@ -54,7 +44,7 @@ namespace OrderSystem.Infrastructure.Services
 
             customer.UpdateFrom(request);
 
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             return customer.ToDto();
         }
@@ -68,7 +58,7 @@ namespace OrderSystem.Infrastructure.Services
             customer.FirstName = request.FirstName;
             customer.LastName = request.LastName;
 
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             return customer.ToDto();
         }
@@ -83,7 +73,7 @@ namespace OrderSystem.Infrastructure.Services
                 return DeleteResult.HasExistingOrders;
 
             _customerRepository.Delete(customer);
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             return DeleteResult.Success;
         }

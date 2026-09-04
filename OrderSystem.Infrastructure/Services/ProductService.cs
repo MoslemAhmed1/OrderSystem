@@ -1,8 +1,11 @@
-using OrderSystem.Domain;
-using OrderSystem.Application.Mappings;
+using OrderSystem.Application;
 using OrderSystem.Application.DTOs.Products;
-using OrderSystem.Application.Interfaces.Services;
 using OrderSystem.Application.Interfaces.Repositories;
+using OrderSystem.Application.Interfaces.Services;
+using OrderSystem.Application.Mappings;
+using OrderSystem.Domain;
+using OrderSystem.Domain.Entities;
+using System.Globalization;
 
 namespace OrderSystem.Infrastructure.Services
 {
@@ -13,7 +16,6 @@ namespace OrderSystem.Infrastructure.Services
         private readonly ICacheService _cache;
         private readonly ICacheVersioningService _cacheVersioning;
         private readonly ITranslationService _translation;
-        private const string versionKey = "products:version"; // Should be placed in configurations
 
         public ProductService(
             IProductRepository productRepository, 
@@ -31,15 +33,15 @@ namespace OrderSystem.Infrastructure.Services
 
         public async Task<ProductResponse> GetByIdAsync(int id)
         {
-            var version = await _cacheVersioning.GetVersionAsync(versionKey);
+            var version = await _cacheVersioning.GetVersionAsync(CacheKeys.ProductsVersion);
+            var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            var cacheKey = $"products:v{version}:{id}:{culture}";
 
-            var cacheKey = $"products:v{version}:{id}";
             var cachedProduct = await _cache.GetAsync<ProductResponse>(cacheKey);
             if (cachedProduct is not null)
                 return cachedProduct;
 
-            var product = await _productRepository.GetByIdAsync(id);
-
+            var product = await _productRepository.GetByIdWithTranslationsAsync(id);
             if (product is null)
                 throw new KeyNotFoundException(_translation.Translate("ProductNotFound", id));
 
@@ -51,13 +53,15 @@ namespace OrderSystem.Infrastructure.Services
 
         public async Task<List<ProductResponse>> GetAllAsync()
         {
-            var version = await _cacheVersioning.GetVersionAsync(versionKey);
-            var cacheKey = $"products:v{version}:all";
+            var version = await _cacheVersioning.GetVersionAsync(CacheKeys.ProductsVersion);
+            var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            var cacheKey = $"products:v{version}:all:{culture}";
+
             var cachedProducts = await _cache.GetAsync<List<ProductResponse>>(cacheKey);
             if (cachedProducts is not null)
                 return cachedProducts;
 
-            var products = await _productRepository.GetAllAsync();
+            var products = await _productRepository.GetAllWithTranslationsAsync();
             var response = products.Select(product => product.ToDto()).ToList();
 
             await _cache.SetAsync(cacheKey, response);
@@ -70,10 +74,23 @@ namespace OrderSystem.Infrastructure.Services
             var product = request.ToEntity();
 
             await _productRepository.AddAsync(product);
-            await _uow.CommitAsync();
+            
+            foreach(var t in request.Translations) // TODO: stack all tasks then call WhenAll ?
+            {
+                var translation = new ProductTranslation
+                {
+                    Product = product,
+                    Culture = t.Culture.ToLowerInvariant(),
+                    Name = t.Name
+                };
+                product.Translations.Add(translation);
+                await _productRepository.AddTranslationAsync(translation);
+            }
+
+            await _uow.SaveChangesAsync();
 
             var response = product.ToDto();
-            await _cacheVersioning.UpdateVersionAsync(versionKey);
+            await _cacheVersioning.UpdateVersionAsync(CacheKeys.ProductsVersion);
 
             return response;
         }
@@ -86,12 +103,42 @@ namespace OrderSystem.Infrastructure.Services
 
             product.UpdateFrom(request);
 
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
             var response = product.ToDto();
-            await _cacheVersioning.UpdateVersionAsync(versionKey);
+            await _cacheVersioning.UpdateVersionAsync(CacheKeys.ProductsVersion);
 
             return response;
+        }
+
+        public async Task<ProductResponse> SetTranslationAsync(int productId, ProductTranslationRequest request)
+        {
+            var product = await _productRepository.GetByIdWithTranslationsAsync(productId);
+            if (product is null)
+                throw new KeyNotFoundException(_translation.Translate("ProductNotFound", productId));
+
+            var culture = request.Culture.ToLowerInvariant();
+            var existing = await _productRepository.GetTranslationAsync(productId, culture);
+            if (existing is not null)
+            {
+                existing.Name = request.Name;
+            }
+            else
+            {
+                var translation = new ProductTranslation
+                {
+                    ProductId = productId,
+                    Culture = culture,
+                    Name = request.Name
+                };
+                product.Translations.Add(translation);
+                await _productRepository.AddTranslationAsync(translation);
+            }
+
+            await _uow.SaveChangesAsync();
+            await _cacheVersioning.UpdateVersionAsync(CacheKeys.ProductsVersion);
+
+            return product.ToDto();
         }
 
         public async Task<DeleteResult> DeleteAsync(int id)
@@ -104,9 +151,9 @@ namespace OrderSystem.Infrastructure.Services
                 return DeleteResult.HasExistingOrders;
 
             _productRepository.Delete(product);
-            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
 
-            await _cacheVersioning.UpdateVersionAsync(versionKey);
+            await _cacheVersioning.UpdateVersionAsync(CacheKeys.ProductsVersion);
             return DeleteResult.Success;
         }
     }
