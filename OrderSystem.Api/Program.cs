@@ -224,16 +224,6 @@ Part 6 - Authentication & Authorization:
 Part 7 - Translations:
 - Revise Translations(IStringLocalizer, IStringLocalizerFactory, and every related line in program.cs), Implement Translations for all messages, errors, view models(the views presented to the client), and DTOs(the data sent to the client)
 
--------------------------------------------------------------------------------------------
-
-- TODO: Implement Content Translation
-- TODO: Deep dive into the comparisons stated above
-- TODO: Read more about Navigation Fixup
-- TODO: Read about Tasks ConfigureAwait
-- TODO: Records (records, record class, record struct, ...), Types, when to use each & Comparison between records & classes
-- TODO: JWT vs JWS vs JWE
-- TODO: Split Queries (AsSplitQuery) vs Single Query (AsSingleQuery), explicit joins
-
 ------------------------------------------------------------------------------------------
 Finished Tasks:
 1-  Discount: move to appsettings.json, so any discount can be applied without changing the code [Configurations, DONE]
