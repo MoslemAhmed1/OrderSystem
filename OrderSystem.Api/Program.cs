@@ -177,7 +177,16 @@ app.MapControllers();
 app.Run();
 
 /*
+
 Upcoming Tasks:
+- Learn & Implement CQRS (Command Query Responsibility Segregation) pattern
+- Read about CORS
+- Complete remaining TODOs in DotNetTest project
+ 
+------------------------------------------------------------------------------------------ 
+ 
+Finished Tasks 2:
+
 Part 1 - Small Modifications:
 - Move IDiscountPolicy to Application Layer, and DiscountPolicy to Infrastructure/Services/
 - Apply cache versioning, and cache invalidation on update, delete, and create
@@ -225,6 +234,7 @@ Part 7 - Translations:
 - Revise Translations(IStringLocalizer, IStringLocalizerFactory, and every related line in program.cs), Implement Translations for all messages, errors, view models(the views presented to the client), and DTOs(the data sent to the client)
 
 ------------------------------------------------------------------------------------------
+
 Finished Tasks:
 1-  Discount: move to appsettings.json, so any discount can be applied without changing the code [Configurations, DONE]
 2-  Unit of Work: remove repositories, each service will have an instance of uow and the repositories it needs only [DONE]
@@ -239,7 +249,9 @@ Finished Tasks:
 11- Use Hashing, Salting for Passwords
 12- Caching: In-Memory & Redis [DONE]
 13- Language Translations (Localization)
+
 ----------------------------------------------------------------------
+
 Questions:
 - Should I split functionalities like (logout, logoutall), (2 overloaded revoke functions, revokeall&revokeby), etc..
 - CachingOptions using which type of IOptions ?
