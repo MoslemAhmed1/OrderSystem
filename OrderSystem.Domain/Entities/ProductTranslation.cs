@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace OrderSystem.Domain.Entities;
+﻿namespace OrderSystem.Domain.Entities;
 
 public class ProductTranslation
 {

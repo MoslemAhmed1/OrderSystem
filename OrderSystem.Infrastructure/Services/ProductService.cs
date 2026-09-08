@@ -31,7 +31,7 @@ namespace OrderSystem.Infrastructure.Services
             _translation = translation;
         }
 
-        public async Task<ProductResponse> GetByIdAsync(int id)
+        public async Task<ProductResponse> GetByIdAsync(int id /*, string culture*/)
         {
             var version = await _cacheVersioning.GetVersionAsync(CacheKeys.ProductsVersion);
             var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
