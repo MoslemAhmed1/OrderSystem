@@ -53,7 +53,7 @@ namespace OrderSystem.Infrastructure.Services
             return order.ToDto();
         }
         
-        public async Task<List<OrderResponse>> GetAllAsync(int userId, bool isAdmin) // TODO: should be 2 separate methods for admin and customer
+        public async Task<List<OrderResponse>> GetAllAsync(int userId, bool isAdmin) // TODO (ignore): should be 2 separate methods for admin and customer
         {
             List<Order> orders;
 

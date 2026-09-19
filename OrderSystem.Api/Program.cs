@@ -16,6 +16,7 @@ using OrderSystem.Infrastructure.Context;
 using OrderSystem.Infrastructure.Services;
 using OrderSystem.Infrastructure.Repositories;
 using OrderSystem.Infrastructure.Options;
+using OrderSystem.Application.Features.Products.Queries;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,11 +86,14 @@ builder.Services.Configure<DiscountOptions>(builder.Configuration.GetSection("Di
 builder.Services.AddSingleton<IDiscountPolicy, DiscountPolicy>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddScoped<IProductService, ProductService>();
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<ITokenHasher, Sha256TokenHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+// MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<GetProductByIdHandler>());
 
 // Localization
 builder.Services.AddLocalization(options => { options.ResourcesPath = "Resources"; });
@@ -181,6 +185,7 @@ app.Run();
 Upcoming Tasks:
 - Learn & Implement CQRS (Command Query Responsibility Segregation) pattern
 - Read about CORS
+- Facade Design Pattern
 - Complete remaining TODOs in DotNetTest project
  
 ------------------------------------------------------------------------------------------ 
@@ -235,7 +240,7 @@ Part 7 - Translations:
 
 ------------------------------------------------------------------------------------------
 
-Finished Tasks:
+Finished Tasks 1:
 1-  Discount: move to appsettings.json, so any discount can be applied without changing the code [Configurations, DONE]
 2-  Unit of Work: remove repositories, each service will have an instance of uow and the repositories it needs only [DONE]
 3-  OrderService: fix N+1 query problem [DONE]
@@ -252,8 +257,4 @@ Finished Tasks:
 
 ----------------------------------------------------------------------
 
-Questions:
-- Should I split functionalities like (logout, logoutall), (2 overloaded revoke functions, revokeall&revokeby), etc..
-- CachingOptions using which type of IOptions ?
-- AppLocalizationOptions correct approach or just keep it as raw config ?
 */

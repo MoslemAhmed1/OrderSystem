@@ -15,7 +15,7 @@ namespace OrderSystem.Infrastructure.Context
 
         public OrderContext(DbContextOptions<OrderContext> options) : base(options) { }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) // TODO: Split Configurations & implement IEntityTypeConfiguration<T>
+        protected override void OnModelCreating(ModelBuilder modelBuilder) // TODO (ignore): Split Configurations & implement IEntityTypeConfiguration<T>
         {
             base.OnModelCreating(modelBuilder);
 

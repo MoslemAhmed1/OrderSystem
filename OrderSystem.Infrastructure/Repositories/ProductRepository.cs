@@ -45,14 +45,14 @@ namespace OrderSystem.Infrastructure.Repositories
         }
 
         // Translations
-        public async Task<Product?> GetByIdWithTranslationsAsync(int id)
+        public async Task<Product?> GetByIdWithTranslationsAsync(int id, string culture)
         {
-            return await _orderContext.Products.Include(p => p.Translations).FirstOrDefaultAsync(p => p.Id == id);
+            return await _orderContext.Products.Include(p => p.Translations.Where(t => t.Culture == culture)).FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<List<Product>> GetAllWithTranslationsAsync()
+        public async Task<List<Product>> GetAllWithTranslationsAsync(string culture)
         {
-            return await _orderContext.Products.AsNoTracking().Include(p => p.Translations).ToListAsync();
+            return await _orderContext.Products.AsNoTracking().Include(p => p.Translations.Where(t => t.Culture == culture)).ToListAsync();
         }
 
         public async Task AddTranslationAsync(ProductTranslation translation)

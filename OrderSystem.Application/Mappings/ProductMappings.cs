@@ -1,6 +1,7 @@
-﻿using OrderSystem.Application.DTOs.Products;
+using OrderSystem.Application.DTOs.Products;
+using OrderSystem.Application.Features.Products.Commands;
+using OrderSystem.Application.Features.Products.Commands.UpdateProduct;
 using OrderSystem.Domain.Entities;
-using System.Globalization;
 
 namespace OrderSystem.Application.Mappings
 {
@@ -20,14 +21,12 @@ namespace OrderSystem.Application.Mappings
 
         public static string ResolveName(this Product product)
         {
-            var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-
-            var translation = product.Translations?.FirstOrDefault(t => t.Culture == culture);
+            var translation = product.Translations?.FirstOrDefault();
             return translation?.Name ?? product.Name; // fallback
         }
 
-        // Dto -> Entity
-        public static Product ToEntity(this CreateProductRequest request) 
+        // Command -> Entity
+        public static Product ToEntity(this CreateProductCommand request) 
         {
             return new Product
             {
@@ -37,7 +36,7 @@ namespace OrderSystem.Application.Mappings
             };
         }
 
-        public static void UpdateFrom(this Product entity, UpdateProductRequest request)
+        public static void UpdateFrom(this Product entity, UpdateProductCommand request)
         {
             entity.Name = request.Name;
             entity.Price = request.Price;

@@ -13,8 +13,8 @@ namespace OrderSystem.Application.Interfaces.Repositories
         Task<bool> IsUsedInOrdersAsync(int id);
 
         // Translations
-        Task<Product?> GetByIdWithTranslationsAsync(int id);
-        Task<List<Product>> GetAllWithTranslationsAsync();
+        Task<Product?> GetByIdWithTranslationsAsync(int id, string culture);
+        Task<List<Product>> GetAllWithTranslationsAsync(string culture);
         Task AddTranslationAsync(ProductTranslation translation);
         Task<ProductTranslation?> GetTranslationAsync(int productId, string culture);
     }
