@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Application.Interfaces.Services;
@@ -6,6 +7,15 @@ using OrderSystem.Domain;
 namespace OrderSystem.Application.Features.Products.Commands
 {
     public record DeleteProductCommand(int Id) : IRequest<DeleteResult>;
+
+    public class DeleteProductCommandValidator : AbstractValidator<DeleteProductCommand>
+    {
+        public DeleteProductCommandValidator()
+        {
+            RuleFor(x => x.Id)
+                .GreaterThan(0).WithMessage("A valid product ID is required.");
+        }
+    }
 
     public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand, DeleteResult>
     {

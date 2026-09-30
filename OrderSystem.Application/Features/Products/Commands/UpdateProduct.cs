@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using OrderSystem.Application.DTOs.Products;
 using OrderSystem.Application.Interfaces.Repositories;
@@ -11,6 +12,25 @@ namespace OrderSystem.Application.Features.Products.Commands.UpdateProduct
         string Name,
         decimal Price,
         int StockQuantity) : IRequest<ProductResponse>;
+
+    public class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
+    {
+        public UpdateProductCommandValidator()
+        {
+            RuleFor(x => x.Id)
+                .GreaterThan(0).WithMessage("A valid product ID is required.");
+
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Product name is required.")
+                .MaximumLength(100).WithMessage("Product name must not exceed 100 characters.");
+
+            RuleFor(x => x.Price)
+                .GreaterThan(0).WithMessage("Price must be greater than zero.");
+
+            RuleFor(x => x.StockQuantity)
+                .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative.");
+        }
+    }
 
     public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, ProductResponse>
     {

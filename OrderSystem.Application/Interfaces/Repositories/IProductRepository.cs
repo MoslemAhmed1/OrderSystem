@@ -1,3 +1,4 @@
+using OrderSystem.Application.Features.Products.Queries;
 using OrderSystem.Domain.Entities;
 
 namespace OrderSystem.Application.Interfaces.Repositories
@@ -17,5 +18,7 @@ namespace OrderSystem.Application.Interfaces.Repositories
         Task<List<Product>> GetAllWithTranslationsAsync(string culture);
         Task AddTranslationAsync(ProductTranslation translation);
         Task<ProductTranslation?> GetTranslationAsync(int productId, string culture);
+
+        Task<(List<Product> Products, int TotalCount)> GetPagedAsync(string culture, ProductQueryParameters queryParams);
     }
 }

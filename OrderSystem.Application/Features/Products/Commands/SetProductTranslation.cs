@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using OrderSystem.Application.DTOs.Products;
 using OrderSystem.Application.Interfaces.Repositories;
@@ -7,10 +8,26 @@ using OrderSystem.Domain.Entities;
 
 namespace OrderSystem.Application.Features.Products.Commands.SetProductTranslation
 {
-    public record SetProductTranslationCommand(
-        int ProductId,
-        string Culture,
-        string Name) : IRequest<ProductResponse>;
+    public record SetProductTranslationCommand(int ProductId, string Culture, string Name) : IRequest<ProductResponse>;
+
+    public class SetProductTranslationCommandValidator : AbstractValidator<SetProductTranslationCommand>
+    {
+        private static readonly List<string> AllowedCultures = new List<string>() { "en", "ar", "de" };
+        public SetProductTranslationCommandValidator()
+        {
+            RuleFor(x => x.ProductId)
+                .GreaterThan(0).WithMessage("A valid product ID is required.");
+
+            RuleFor(x => x.Culture)
+                .Must(ct => AllowedCultures.Contains(ct.ToLowerInvariant())).WithMessage("This culture isn't supported")
+                .NotEmpty().WithMessage("Culture is required.")
+                .MaximumLength(10).WithMessage("Culture code must not exceed 10 characters.");
+
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Translated name is required.")
+                .MaximumLength(100).WithMessage("Translated name must not exceed 100 characters.");
+        }
+    }
 
     public class SetProductTranslationCommandHandler : IRequestHandler<SetProductTranslationCommand, ProductResponse>
     {

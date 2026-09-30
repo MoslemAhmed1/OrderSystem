@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-
+using OrderSystem.Application.Features.Products.Queries;
+using OrderSystem.Application.Interfaces.Repositories;
 using OrderSystem.Domain.Entities;
 using OrderSystem.Infrastructure.Context;
-using OrderSystem.Application.Interfaces.Repositories;
 
 namespace OrderSystem.Infrastructure.Repositories
 {
@@ -64,6 +64,48 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             //return await _orderContext.ProductTranslations.FirstOrDefaultAsync(t => t.ProductId == productId && t.Culture == culture);
             return await _orderContext.ProductTranslations.FindAsync(productId, culture);
+        }
+
+        public async Task<(List<Product> Products, int TotalCount)> GetPagedAsync(string culture, ProductQueryParameters queryParams)
+        {
+            var query = _orderContext.Products
+                .AsNoTracking()
+                .Include(p => p.Translations.Where(t => t.Culture == culture))
+                .AsQueryable();
+
+            // Filter
+            if (!string.IsNullOrWhiteSpace(queryParams.Search))
+            {
+                var term = queryParams.Search.ToLower();
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(term) ||
+                    p.Translations.Any(t => t.Culture == culture && t.Name.ToLower().Contains(term)));
+            }
+
+            if (queryParams.MinPrice.HasValue)
+                query = query.Where(p => p.Price >= queryParams.MinPrice.Value);
+
+            if (queryParams.MaxPrice.HasValue)
+                query = query.Where(p => p.Price <= queryParams.MaxPrice.Value);
+
+            // Total count
+            var totalCount = await query.CountAsync();
+
+            // Sort
+            query = queryParams.SortBy?.ToLowerInvariant() switch
+            {
+                "price" => queryParams.SortDescending ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price),
+                "stockquantity" => queryParams.SortDescending ? query.OrderByDescending(p => p.StockQuantity) : query.OrderBy(p => p.StockQuantity)
+                _ => query
+            };
+
+            // Pagination
+            var products = await query
+                .Skip((queryParams.Page - 1) * queryParams.PageSize)
+                .Take(queryParams.PageSize)
+                .ToListAsync();
+
+            return (products, totalCount);
         }
     }
 }

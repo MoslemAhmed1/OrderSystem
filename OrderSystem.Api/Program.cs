@@ -1,154 +1,36 @@
-using System.Text;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using OrderSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-
-using OrderSystem.Common;
-using OrderSystem.Middlewares;
-
-using OrderSystem.Application.Interfaces.Services;
-using OrderSystem.Application.Interfaces.Repositories;
-
+using Microsoft.Extensions.Options;
+using OrderSystem.Application.Extensions;
+using OrderSystem.Extensions;
 using OrderSystem.Infrastructure.Context;
-using OrderSystem.Infrastructure.Services;
-using OrderSystem.Infrastructure.Repositories;
+using OrderSystem.Infrastructure.Extensions;
 using OrderSystem.Infrastructure.Options;
-using OrderSystem.Application.Features.Products.Queries;
+using OrderSystem.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-    })
-    .ConfigureApiBehaviorOptions(options =>
-    {
-        options.InvalidModelStateResponseFactory = context =>
-        {
-            var errors = context.ModelState
-                .Where(entry => entry.Value?.Errors.Count > 0)
-                .SelectMany(entry => entry.Value!.Errors.Select(e => $"{entry.Key}: {e.ErrorMessage}"))
-                .ToList();
-
-            var response = ApiResponse.Fail("Validation failed.", StatusCodes.Status400BadRequest, errors);
-            return new BadRequestObjectResult(response);
-        };
-    });
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddOpenApi();
-
-// JWT Authentication
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-var jwtOptions = builder.Configuration.GetSection("Jwt");
 builder.Services
-    .AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.SaveToken = true;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = jwtOptions["Issuer"],
-            ValidateAudience = true,
-            ValidAudience = jwtOptions["Audience"],
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions["Secret"]!)),
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero,
-        };
-    });
-builder.Services.AddAuthorization();
-
-// SQL Server DbContext
-builder.Services.AddDbContext<OrderContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("OrderSystemDb"));
-});
-
-// Repositories
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// Services
-builder.Services.Configure<DiscountOptions>(builder.Configuration.GetSection("Discounts"));
-builder.Services.AddSingleton<IDiscountPolicy, DiscountPolicy>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<ICustomerService, CustomerService>();
-
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddSingleton<ITokenHasher, Sha256TokenHasher>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-
-// MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<GetProductByIdHandler>());
-
-// Localization
-builder.Services.AddLocalization(options => { options.ResourcesPath = "Resources"; });
-builder.Services.Configure<AppLocalizationOptions>(builder.Configuration.GetSection("Localization"));
-
-var locOptions = builder.Configuration.GetSection("Localization").Get<AppLocalizationOptions>();
-var localizationOptions = new RequestLocalizationOptions()
-    .SetDefaultCulture(locOptions.DefaultCulture)
-    .AddSupportedCultures(locOptions.SupportedCultures)
-    .AddSupportedUICultures(locOptions.SupportedCultures);
-builder.Services.AddScoped<ITranslationService, TranslationService>();
-
-// Caching
-builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection("Caching"));
-var cachingProvider = builder.Configuration.GetSection("Caching")["Provider"];
-if (cachingProvider == "InMemory")
-{
-    builder.Services.AddMemoryCache();
-    builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
-}
-else if (cachingProvider == "Redis")
-{
-    builder.Services.AddStackExchangeRedisCache(options =>
-    {
-        options.Configuration = builder.Configuration.GetConnectionString("Redis");
-        options.InstanceName = "OrderSystem_";
-    });
-    builder.Services.AddSingleton<ICacheService, RedisCacheService>();
-}
-else
-{
-    builder.Services.AddSingleton<ICacheService, NullCacheService>();
-}
-
-builder.Services.AddSingleton<ICacheVersioningService, CacheVersioningService>();
+    .AddApiServices(builder.Configuration) // controllers, auth, JWT, OpenAPI, localization
+    .AddApplicationServices() // MediatR, pipeline behaviors, validators
+    .AddInfrastructureServices(builder.Configuration); // DB, repos, services, cache
 
 var app = builder.Build();
 
-// Automatic Migartions
+// Automatic migrations
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var db     = scope.ServiceProvider.GetRequiredService<OrderContext>();
     try
     {
-        var dbContext = services.GetRequiredService<OrderContext>();
-        if (dbContext.Database.HasPendingModelChanges())
+        if (db.Database.HasPendingModelChanges())
         {
-            logger.LogCritical("There are changes in Domain.Entities which haven't been added to a migration.");
+            logger.LogCritical("Pending model changes detected — add a migration before starting.");
             throw new InvalidOperationException("Add a migration before starting the application.");
         }
 
         logger.LogInformation("Applying database migrations...");
-        await dbContext.Database.MigrateAsync();
+        await db.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied.");
     }
     catch (Exception ex)
@@ -158,20 +40,24 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Middleware
 app.UseExceptionHandler(opt => { });
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "OrderSystem API v1");
-    });
+    app.UseSwaggerUI(opt => opt.SwaggerEndpoint("/openapi/v1.json", "OrderSystem API v1"));
 }
+
+// Localization
+var locOptions = app.Services.GetRequiredService<IOptions<AppLocalizationOptions>>().Value;
+app.UseRequestLocalization(new RequestLocalizationOptions()
+    .SetDefaultCulture(locOptions.DefaultCulture)
+    .AddSupportedCultures(locOptions.SupportedCultures)
+    .AddSupportedUICultures(locOptions.SupportedCultures));
 
 app.UseRequestTiming();
 app.UseRateLimiting();
-app.UseRequestLocalization(localizationOptions);
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -179,14 +65,11 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
 /*
 
 Upcoming Tasks:
 - Learn & Implement CQRS (Command Query Responsibility Segregation) pattern
-- Read about CORS
 - Facade Design Pattern
-- Complete remaining TODOs in DotNetTest project
  
 ------------------------------------------------------------------------------------------ 
  

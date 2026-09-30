@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using OrderSystem.Application.DTOs.Products;
 using OrderSystem.Application.Interfaces.Repositories;
@@ -8,6 +9,15 @@ using System.Globalization;
 namespace OrderSystem.Application.Features.Products.Queries
 {
     public record GetProductByIdQuery(int Id) : IRequest<ProductResponse>;
+
+    public class GetProductByIdQueryValidator : AbstractValidator<GetProductByIdQuery>
+    {
+        public GetProductByIdQueryValidator()
+        {
+            RuleFor(x => x.Id)
+                .GreaterThan(0).WithMessage("A valid product ID is required.");
+        }
+    }
 
     public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, ProductResponse>
     {
